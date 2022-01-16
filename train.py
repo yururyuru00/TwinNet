@@ -41,7 +41,7 @@ def main(cfg: DictConfig):
         mlflow.log_metric('acc_max', value=max(test_acces))
         mlflow.log_metric('acc_min', value=min(test_acces))
 
-    print('test mean acc: {:.2f}'.format(test_acc_mean))
+    print('test mean acc: {:.3f}'.format(test_acc_mean))
     return test_acc_mean
 
 

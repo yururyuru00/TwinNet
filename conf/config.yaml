@@ -309,10 +309,12 @@ SAGE_Arxiv_tuned: &SAGE_Arxiv_tuned
 Twin: &Twin
   skip_connection: summarize
   n_layer: 6
-  temparature: -1 # \in R
-  scope: global # [local, global]
+  temparature: 1 # \in R
+  scope: local # [local, global]
+  kernel: sdp # [dp, sdp, wdp, ad, mx]
   activation: ReLU # [ReLU, Identity]
   self_loop: True # [True, False]
+
 
 TwinGCN_Cora: &TwinGCN_Cora
   <<: [*Twin, *GCN_Cora_tuned]
