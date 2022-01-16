@@ -1,4 +1,22 @@
-key: TwinGCN_Cora
+key: GCN_Cora_exist
+
+
+# -------hydra & mlflow & optuna-------
+
+mlflow:
+  server_ip: localhost # 192.168.11.30
+  runname: test
+
+defaults:
+  - override hydra/sweeper: optuna # [basic, optuna]
+
+hydra:
+  sweeper:
+    sampler:
+      _target_: optuna.samplers.TPESampler
+    direction: maximize
+    n_jobs: 1
+    n_trials: 300
 
 
 # -------datasets (planetoid)-------
@@ -290,8 +308,28 @@ SAGE_Arxiv_tuned: &SAGE_Arxiv_tuned
 # Twin-Graph Convolution Networks (Twin-GCN)
 Twin: &Twin
   skip_connection: summarize
-  scope: global # ['local', 'global']
-  att_mode: dp
+  n_layer: 6
+  temparature: -1 # \in R
+  scope: global # [local, global]
+  activation: ReLU # [ReLU, Identity]
+  self_loop: True # [True, False]
 
 TwinGCN_Cora: &TwinGCN_Cora
-  <<: [*Twin, *GCN_Cora_exist]
+  <<: [*Twin, *GCN_Cora_tuned]
+
+TwinGCN_CiteSeer: &TwinGCN_CiteSeer
+  <<: [*Twin, *GCN_CiteSeer_tuned]
+
+TwinGCN_PubMed: &TwinGCN_PubMed
+  <<: [*Twin, *GCN_PubMed_tuned]
+
+TwinGCN_Arxiv: &TwinGCN_Arxiv
+  <<: [*Twin, *GCN_Arxiv_tuned]
+
+TwinGCN_PPI: &TwinGCN_PPI
+  <<: [*Twin, *GCN_PPI_tuned]
+
+TwinGCN_PPIinduct: &TwinGCN_PPIinduct
+  <<: [*Twin, *GCN_PPIinduct_exist]
+
+

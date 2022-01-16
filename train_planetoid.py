@@ -2,6 +2,7 @@ from tqdm import tqdm
 
 import torch
 import torch.nn.functional as F
+import torch_geometric.transforms as T
 from torch_geometric.datasets import Planetoid
 
 from model import return_net
@@ -77,5 +78,6 @@ def run(cfg, root):
     test_acces = []
     for tri in tqdm(range(cfg['n_tri'])):
         test_acc = train_and_test(cfg, data)
-        test_acces.append(test_acc)
-    print('mean test acc ({} tri): {:.4f}'.format(cfg.n_tri, sum(test_acces)/len(test_acces)))
+        test_acces.append(test_acc.to('cpu').item())
+        
+    return test_acces

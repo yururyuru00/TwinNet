@@ -2,20 +2,21 @@ import torch
 import torch.nn as nn
 import math
 
-from torch.nn import Linear, LSTM
+from torch.nn import Linear, Identity
 from torch.nn import LayerNorm, BatchNorm1d
 from torch_geometric.nn import GATConv, GCNConv, SAGEConv
 
 
+
 class GNNConv(nn.Module):
     def __init__(self, task, conv_name, in_channels, out_channels, norm,
-                 n_heads=[1, 1], iscat=[False, False], dropout_att=0.):
+                 self_loop=True, n_heads=[1, 1], iscat=[False, False], dropout_att=0.):
         super(GNNConv, self).__init__()
         self.task = task
         self.conv_name = conv_name
 
         if conv_name == 'gcn_conv':
-            self.conv  = GCNConv(in_channels, out_channels)
+            self.conv  = GCNConv(in_channels, out_channels, add_self_loops=self_loop)
 
         elif conv_name == 'sage_conv':
             self.conv  = SAGEConv(in_channels, out_channels)
@@ -40,7 +41,7 @@ class GNNConv(nn.Module):
         elif norm == 'BatchNorm1d':
             self.norm = BatchNorm1d(out_channels)
         else:
-            self.norm = nn.Identity()
+            self.norm = Identity()
 
 
     def forward(self, x, edge_index):
@@ -82,11 +83,11 @@ class TwinGNNConv(nn.Module):
 
 
 class Summarize(nn.Module):
-    def __init__(self, channels, scope, att_mode):
+    def __init__(self, channels, scope, temparature):
         super(Summarize, self).__init__()
 
         self.scope = scope
-        self.att_mode = att_mode
+        self.temp = temparature
         self.att = Linear(2 * channels, 1)
         self.att.reset_parameters()
 
@@ -97,24 +98,13 @@ class Summarize(nn.Module):
         if self.scope == 'local':
             query, key = h_, h
         else: # if 'global'
+            n_nodes = h.size()[0]
             query = h
-            key = torch.mean(h_, dim=0, keepdim=True).repeat((2708, 1, 1))
+            key = torch.mean(h_, dim=0, keepdim=True).repeat((n_nodes, 1, 1))
         
+        alpha = (query * key).sum(dim=-1) / math.sqrt(query.size()[-1])
 
-        # 'Attention' takes query and key as input, alpha as output
-        if self.att_mode == 'ad':
-            query_key = torch.cat([query, key], dim=-1)
-            alpha = self.att(query_key).squeeze(-1)
-
-        elif self.att_mode == 'dp':
-            alpha = (query * key).sum(dim=-1) / math.sqrt(query.size()[-1])
-            
-        else: # if 'mx' (mix of ad and dp attention)
-            query_key = torch.cat([query, key], dim=-1)
-            alpha_ad = self.att(query_key).squeeze(-1)
-            alpha = alpha_ad * torch.sigmoid((query * key).sum(dim=-1))
-
-        alpha_softmax = torch.softmax(alpha, dim=-1)
+        alpha_softmax = torch.softmax(alpha/self.temp, dim=-1)
         return (h * alpha_softmax.unsqueeze(-1)).sum(dim=1) # h_i = \sum_l alpha_i^l * h_i^l
 
 

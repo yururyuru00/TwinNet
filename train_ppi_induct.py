@@ -69,5 +69,5 @@ def run(cfg, root):
     for tri in range(cfg['n_tri']):
         test_acc = train_and_test(cfg, data_loader, device)
         test_acces.append(test_acc)
-    print('mean test acc ({} tri): {:.4f}'.format(cfg.n_tri, sum(test_acces)/len(test_acces)))
-    
+
+    return test_acces    
