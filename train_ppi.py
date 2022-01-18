@@ -41,10 +41,15 @@ def test(loader, model, evaluator, device):
     return test_rocauc.item()
 
 
-def train_and_test(cfg, data_loader):
-    train_loader, test_loader = data_loader
+def train_and_test(tri, cfg, data, device):
+    # data initialize each tri
+    torch.manual_seed(cfg.seed + tri)
+    torch.cuda.manual_seed(cfg.seed + tri)
+    train_loader = RandomNodeSampler(data, num_parts=40, shuffle=True,
+                                     num_workers=0)
+    test_loader = RandomNodeSampler(data, num_parts=5, shuffle=False, 
+                                    num_workers=0)
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = return_net(cfg).to(device)
     optimizer = torch.optim.Adam(params       = model.parameters(), 
                                  lr           = cfg['learning_rate'], 
@@ -58,10 +63,7 @@ def train_and_test(cfg, data_loader):
     return test_acc
 
 
-def run(cfg, root):
-    torch.manual_seed(cfg.seed)
-    torch.cuda.manual_seed(cfg.seed)
-
+def run(cfg, root, device):
     dataset = PygNodePropPredDataset('ogbn-proteins', root+'/data/'+cfg.dataset)
     splitted_idx = dataset.get_idx_split()
     data = dataset[0]
@@ -79,14 +81,9 @@ def run(cfg, root):
         mask[splitted_idx[split]] = True
         data[f'{split}_mask'] = mask
 
-    train_loader = RandomNodeSampler(data, num_parts=40, shuffle=True,
-                                     num_workers=0)
-    test_loader = RandomNodeSampler(data, num_parts=5, num_workers=0)
-    data_loader = [train_loader, test_loader]
-
     test_acces = []
     for tri in range(cfg['n_tri']):
-        test_acc = train_and_test(cfg, data_loader)
+        test_acc = train_and_test(tri, cfg, data, device)
         test_acces.append(test_acc)
 
     return test_acces

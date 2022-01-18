@@ -50,11 +50,7 @@ def train_and_test(cfg, data, device):
     return test_acc
 
 
-def run(cfg, root):
-    torch.manual_seed(0)
-    torch.cuda.manual_seed(0)
-
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+def run(cfg, root, device):
     dataset = PygNodePropPredDataset('ogbn-arxiv', root + '/data/' + cfg.dataset, 
                                      transform=T.ToSparseTensor())
     splitted_idx = dataset.get_idx_split()

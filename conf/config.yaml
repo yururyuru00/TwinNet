@@ -1,7 +1,8 @@
-key: GCN_Cora_exist
+key: TwinGAT_Texas
 
 
 # -------hydra & mlflow & optuna-------
+# command: mlflow server --backend-store-uri sqlite:///tracking.db --default-artifact-root file:/tmp/artifacts --host 0.0.0.0
 
 mlflow:
   server_ip: localhost # 192.168.11.30
@@ -23,7 +24,6 @@ hydra:
 
 Planetoid: &Planetoid
   task: transductive
-  pre_transform: None
   split: full # [public(semi-supervised), full(supervised)]
   n_tri: 10
 
@@ -49,6 +49,29 @@ PubMed: &PubMed
   n_class: 3
 
 
+# -------datasets (web-kb)-------
+
+WebKB: &WebKB
+  task: transductive
+  epochs: 5000 # override >> GNN
+  transform: None
+  n_feat: 1703
+  n_tri: 10 # following original paper
+  n_class: 5
+
+Cornell: &Cornell
+  <<: *WebKB
+  dataset: Cornell
+
+Texas: &Texas
+  <<: *WebKB
+  dataset: Texas
+
+Wisconsin: &Wisconsin
+  <<: *WebKB
+  dataset: Wisconsin
+
+
 # -------datasets (others)-------
 
 PPI: &PPI
@@ -57,7 +80,7 @@ PPI: &PPI
   n_feat: 1 # num. of node feat
   e_feat: 8 # num. of edge feat
   n_class: 112
-  n_tri: 3
+  n_tri: 5
   epochs: 1000 # override >> GNN
 
 Arxiv: &Arxiv
@@ -65,7 +88,7 @@ Arxiv: &Arxiv
   task: transductive
   n_feat: 128
   n_class: 40
-  n_tri: 3
+  n_tri: 5
   epochs: 500 # override >> GNN
 
 Reddit: &Reddit
@@ -73,17 +96,15 @@ Reddit: &Reddit
   task: transductive
   n_feat: 602
   n_class: 41
-  n_tri: 3
+  n_tri: 5
   epochs: 11 # override >> GNN
-  partial_aggr: False # this setting applied to only test. we use part_aggr always when train.
 
 PPIinduct: &PPIinduct
   dataset: PPIinduct
   task: inductive
   n_feat: 50
   n_class: 121
-  n_tri: 3
-
+  n_tri: 5
 
 
 # -------model interface-------
@@ -140,6 +161,27 @@ GCN_Arxiv_exist: &GCN_Arxiv_exist
   weight_decay: 0. # override >> GCN
   norm: BatchNorm1d # override >> GNN
 
+GCN_Cornell_exist: &GCN_Cornell_exist
+  <<: [*Cornell, *GCN]
+  n_hid: 32 # override >> GCN
+  dropout: 0.5 # override >> GCN
+  learning_rate: 0.05 # override >> GCN
+  weight_decay: 5E-6 # override >> GCN
+
+GCN_Texas_exist: &GCN_Texas_exist
+  <<: [*Texas, *GCN]
+  n_hid: 32 # override >> GCN
+  dropout: 0.5 # override >> GCN
+  learning_rate: 0.05 # override >> GCN
+  weight_decay: 5E-6 # override >> GCN
+
+GCN_Wisconsin_exist: &GCN_Wisconsin_exist
+  <<: [*Wisconsin, *GCN]
+  n_hid: 32 # override >> GCN
+  dropout: 0.5 # override >> GCN
+  learning_rate: 0.05 # override >> GCN
+  weight_decay: 5E-6 # override >> GCN
+
 
 # Graph Attention Networks (GAT)
 GAT: &GAT
@@ -178,6 +220,30 @@ GAT_PPIinduct_exist: &GAT_PPIinduct_exist
   n_head: 4 # override >> GAT
   n_head_last: 6 # override >> GAT
   skip_connection: res # override >> GNN
+
+GAT_Cornell_exist: &GAT_Cornell_exist
+  <<: [*Cornell, *GAT]
+  n_hid: 32 # override >> GAT
+  dropout_att: 0.5  # override >> GAT
+  dropout: 0.5 # override >> GAT
+  learning_rate: 0.05 # override >> GAT
+  weight_decay: 5E-6 # override >> GAT
+
+GAT_Texas_exist: &GAT_Texas_exist
+  <<: [*Texas, *GAT]
+  n_hid: 32 # override >> GAT
+  dropout_att: 0.5  # override >> GAT
+  dropout: 0.5 # override >> GAT
+  learning_rate: 0.05 # override >> GAT
+  weight_decay: 5E-6 # override >> GAT
+
+GAT_Wisconsin_exist: &GAT_Wisconsin_exist
+  <<: [*Wisconsin, *GAT]
+  n_hid: 32 # override >> GAT
+  dropout_att: 0.5  # override >> GAT
+  dropout: 0.5 # override >> GAT
+  learning_rate: 0.05 # override >> GAT
+  weight_decay: 5E-6 # override >> GAT
 
 # cannot exe 'GAT_Reddit' because of out of memory
 
@@ -250,7 +316,7 @@ GCN_Arxiv_tuned: &GCN_Arxiv_tuned
   <<: [*GCN_Arxiv_exist]
   learning_rate: 0.001 # override 0.01 >> 0.001
   n_layer: 5 # override 3 >> 5
-  
+
 
 GAT_Cora_tuned: &GAT_Cora_tuned
   <<: [*GAT_Cora_exist]
@@ -302,16 +368,14 @@ SAGE_Arxiv_tuned: &SAGE_Arxiv_tuned
 
 
 
-
 # -------model instance (our study)-------
 
 # Twin-Graph Convolution Networks (Twin-GCN)
 Twin: &Twin
   skip_connection: summarize
-  n_layer: 6
   temparature: 1 # \in R
   scope: local # [local, global]
-  kernel: sdp # [dp, sdp, wdp, ad, mx]
+  kernel: ad # [dp, sdp, wdp, ad, mx]
   activation: ReLU # [ReLU, Identity]
   self_loop: True # [True, False]
 
@@ -334,4 +398,64 @@ TwinGCN_PPI: &TwinGCN_PPI
 TwinGCN_PPIinduct: &TwinGCN_PPIinduct
   <<: [*Twin, *GCN_PPIinduct_exist]
 
+TwinGCN_Cornell: &TwinGCN_Cornell
+  <<: [*Twin, *GCN_Cornell_exist]
 
+TwinGCN_Texas: &TwinGCN_Texas
+  <<: [*Twin, *GCN_Texas_exist]
+
+TwinGCN_Wisconsin: &TwinGCN_Wisconsin
+  <<: [*Twin, *GCN_Wisconsin_exist]
+
+
+TwinSAGE_Arxiv: &TwinSAGE_Arxiv
+  <<: [*Twin, *SAGE_Arxiv_tuned]
+
+TwinSAGE_PPI: &TwinSAGE_PPI
+  <<: [*Twin, *SAGE_PPI_tuned]
+
+TwinSAGE_PPIinduct: &TwinSAGE_PPIinduct
+  <<: [*Twin, *SAGE_PPIinduct_exist]
+
+TwinSAGE_Reddit: &TwinSAGE_Reddit
+  <<: [*Twin, *SAGE_Reddit_tuned]
+
+
+TwinGAT_Cora: &TwinGAT_Cora
+  <<: [*Twin, *GAT_Cora_tuned]
+  activation: Identity # override ReLU >> Identity
+  dropout: 0.6 # override 0 >> 0.6
+  kernel: dp
+  learning_rate: 0.001 # override 0.01 >> 0.001
+  n_hid: 16 # override 8 >> 16
+  norm: BatchNorm1d # override None >> BatchNorm1d
+  temparature: -0.9 # override 1 >> -0.9
+  weight_decay: 0.001 # override 0.0001 >> 0.001
+
+
+TwinGAT_CiteSeer: &TwinGAT_CiteSeer
+  <<: [*Twin, *GAT_CiteSeer_tuned]
+  activation: ELU # override ReLU >> ELU
+
+TwinGAT_PubMed: &TwinGAT_PubMed
+  <<: [*Twin, *GAT_PubMed_tuned]
+  activation: ELU # override ReLU >> ELU
+  dropout: 0.2
+  kernel: mx
+  learning_rate: 0.001
+  temparature: -0.7
+  weight_decay: 0.001
+
+
+TwinGAT_PPIinduct: &TwinGAT_PPIinduct
+  <<: [*Twin, *GAT_PPIinduct_tuned]
+  activation: ELU # [ELU, Identity] # override >> Twin
+
+TwinGAT_Cornell: &TwinGAT_Cornell
+  <<: [*Twin, *GCN_Cornell_exist]
+
+TwinGAT_Texas: &TwinGAT_Texas
+  <<: [*Twin, *GCN_Texas_exist]
+
+TwinGAT_Wisconsin: &TwinGAT_Wisconsin
+  <<: [*Twin, *GCN_Wisconsin_exist]

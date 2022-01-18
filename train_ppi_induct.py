@@ -52,15 +52,11 @@ def train_and_test(cfg, data_loader, device):
     return test_acc
 
 
-def run(cfg, root):
-    torch.manual_seed(0)
-    torch.cuda.manual_seed(0)
-
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+def run(cfg, root, device):
     train_dataset = PPI(root+'/data/'+cfg.dataset, split='train')
     val_dataset   = PPI(root+'/data/'+cfg.dataset, split='val')
     test_dataset  = PPI(root+'/data/'+cfg.dataset, split='test')
-    train_loader = DataLoader(train_dataset, batch_size=1, shuffle=False)
+    train_loader = DataLoader(train_dataset, batch_size=1, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=2, shuffle=False)
     test_loader = DataLoader(test_dataset, batch_size=2, shuffle=False)
     data_loader = [train_loader, val_loader, test_loader]
@@ -70,4 +66,4 @@ def run(cfg, root):
         test_acc = train_and_test(cfg, data_loader, device)
         test_acces.append(test_acc)
 
-    return test_acces    
+    return test_acces

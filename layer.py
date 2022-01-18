@@ -14,8 +14,8 @@ from torch_geometric.utils import add_self_loops, degree
 
 
 class GNNConv(nn.Module):
-    def __init__(self, conv_name, in_channels, out_channels, self_loop, norm,
-                 n_heads=[1, 1], iscat=[False, False], dropout_att=0.):
+    def __init__(self, conv_name, in_channels, out_channels, norm,
+                 self_loop=True, n_heads=[1, 1], iscat=[False, False], dropout_att=0.):
         super(GNNConv, self).__init__()
 
         if conv_name == 'gcn_conv':
@@ -41,19 +41,24 @@ class GNNConv(nn.Module):
             if iscat[1]: # if this gatconv's cat is True
                 out_channels = out_channels * n_heads[1]
 
-        if norm != 'None':
-            self.norm  = eval(norm + '(out_channels)')
-            self.norm_ = eval(norm + '(out_channels)')
-        else: # norm == 'None'
-            self.norm  = nn.Identity()
-            self.norm_ = nn.Identity()
+        if norm == 'LayerNorm':
+            self.norm, self.norm_ = LayerNorm(out_channels), LayerNorm(out_channels)
+        elif norm == 'BatchNorm1d':
+            self.norm, self.norm_ = BatchNorm1d(out_channels), BatchNorm1d(out_channels)
+        else:
+            self.norm, self.norm_ = Identity(), Identity()
 
 
-    def forward(self, x, x_, edge_index):
-        x = self.conv(x, edge_index) # conv use aggregate 
-        x_ = self.conv_(x_) # conv_ do not use aggregate
-        
-        return self.norm(x), self.norm_(x_)
+    def forward(self, xs, edge_index):
+        if isinstance(xs, list): # if xs is [x, x_], we use twin-gnn
+            x = self.conv(xs[0], edge_index)
+            x_ = self.conv_(xs[1])
+            return self.norm(x), self.norm_(x_)
+
+        else: # if xs is x, we use sigle-gnn
+            x = xs
+            x = self.conv(x, edge_index)
+            return self.norm(x)
 
 
 # if cfg.skip_connection is 'summarize'
@@ -65,12 +70,8 @@ class Summarize(nn.Module):
         self.att_temparature = temparature
         
         self.att = Linear(2 * channels, 1)
-        self.weight = nn.Parameter(torch.ones(channels), requires_grad=True)
-
-        self.reset_parameters()
-
-    def reset_parameters(self):
         self.att.reset_parameters()
+        self.weight = nn.Parameter(torch.ones(channels), requires_grad=True)
 
     def forward(self, hs, hs_):
         h = torch.stack(hs, dim=1)  # h is (n, L, d).
@@ -128,3 +129,4 @@ class SkipConnection(nn.Module):
             gating_weights = torch.sigmoid(self.linear(x))
             ones = torch.ones_like(gating_weights)
             return h*gating_weights + x*(ones-gating_weights) # h*W + x*(1-W)
+    
