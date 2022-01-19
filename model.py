@@ -128,35 +128,41 @@ class GCN(nn.Module):
         self.dropout = cfg.dropout
 
         self.in_conv = GNNConv('gcn_conv', cfg.n_feat, cfg.n_hid, cfg.norm)
-        
+        self.in_skip = SkipConnection(cfg.skip_connection, cfg.n_feat, cfg.n_hid)
+
         self.mid_convs = nn.ModuleList()
         self.skips = nn.ModuleList()
         for l in range(1, cfg.n_layer-1):
             if cfg.skip_connection != 'dense':
                 in_channels = cfg.n_hid
-            else: # if skip connection is dense
-                in_channels = cfg.n_hid*l
+            else: # if skip connection is dense (h = h || x)
+                in_channels = cfg.n_hid + cfg.n_hid
             self.mid_convs.append(GNNConv('gcn_conv', in_channels, cfg.n_hid, cfg.norm))
-            self.skips.append(SkipConnection(cfg.skip_connection, cfg.n_hid))
+            self.skips.append(SkipConnection(cfg.skip_connection, in_channels, cfg.n_hid))
         
         if cfg.skip_connection != 'dense':
             in_channels = cfg.n_hid
         else: # if skip connection is dense
-            in_channels = cfg.n_hid*(cfg.n_layer-1)
+            in_channels = cfg.n_hid + cfg.n_hid
         self.out_conv = GNNConv('gcn_conv', in_channels, cfg.n_class, norm='None')
+        # last skip_connection cannot use dense-skip, because of dim-size must ba n_class
+        self.out_skip = SkipConnection('res', in_channels, cfg.n_class)
+
 
     def forward(self, x, edge_index):
-        x = self.in_conv(x, edge_index)
+        h = self.in_conv(x, edge_index)
+        x = self.in_skip(h, x)
         x = F.relu(x)
         x = F.dropout(x, self.dropout, training=self.training)
 
         for mid_conv, skip in zip(self.mid_convs, self.skips):
             h = mid_conv(x, edge_index)
-            h = F.relu(h)
             x = skip(h, x)
+            x = F.relu(x)
             x = F.dropout(x, self.dropout, training=self.training)
         
-        x = self.out_conv(x, edge_index)
+        h = self.out_conv(x, edge_index)
+        x = self.out_skip(h, x)
         return x
 
 
@@ -166,35 +172,41 @@ class SAGE(nn.Module):
         self.dropout = cfg.dropout
 
         self.in_conv = GNNConv('sage_conv', cfg.n_feat, cfg.n_hid, cfg.norm)
+        self.in_skip = SkipConnection(cfg.skip_connection, cfg.n_feat, cfg.n_hid)
 
         self.mid_convs = nn.ModuleList()
         self.skips = nn.ModuleList()
         for l in range(1, cfg.n_layer-1):
             if cfg.skip_connection != 'dense':
                 in_channels = cfg.n_hid
-            else: # if skip connection is dense
-                in_channels = cfg.n_hid*l
+            else: # if skip connection is dense (h = h || x)
+                in_channels = cfg.n_hid + cfg.n_hid
             self.mid_convs.append(GNNConv('sage_conv', in_channels, cfg.n_hid, cfg.norm))
-            self.skips.append(SkipConnection(cfg.skip_connection, cfg.n_hid))
+            self.skips.append(SkipConnection(cfg.skip_connection, in_channels, cfg.n_hid))
 
         if cfg.skip_connection != 'dense':
             in_channels = cfg.n_hid
         else: # if skip connection is dense
-            in_channels = cfg.n_hid*(cfg.n_layer-1)
+            in_channels = cfg.n_hid + cfg.n_hid
         self.out_conv = GNNConv('sage_conv', in_channels, cfg.n_class, norm='None')
+        # last skip_connection cannot use dense-skip, because of dim-size must ba n_class
+        self.out_skip = SkipConnection('res', in_channels, cfg.n_class)
+
 
     def forward(self, x, edge_index):
-        x = self.in_conv(x, edge_index)
+        h = self.in_conv(x, edge_index)
+        x = self.in_skip(h, x)
         x = F.relu(x)
         x = F.dropout(x, self.dropout, training=self.training)
 
         for mid_conv, skip in zip(self.mid_convs, self.skips):
             h = mid_conv(x, edge_index)
-            h = F.relu(h)
             x = skip(h, x)
+            x = F.relu(x)
             x = F.dropout(x, self.dropout, training=self.training)
 
-        x = self.out_conv(x, edge_index)
+        h = self.out_conv(x, edge_index)
+        x = self.out_skip(h, x)
         return x
 
 
@@ -207,43 +219,49 @@ class GAT(nn.Module):
                                n_heads     = [1, cfg.n_head],
                                iscat       = [False, True],
                                dropout_att = cfg.dropout_att)
+        self.in_skip = SkipConnection(cfg.skip_connection, cfg.n_feat, cfg.n_hid*cfg.n_head)
         
         self.mid_convs = torch.nn.ModuleList()
         self.skips = nn.ModuleList()
         for l in range(1, cfg.n_layer-1):
             if cfg.skip_connection != 'dense':
                 in_channels = cfg.n_hid
-            else: # if skip connection is dense
-                in_channels = cfg.n_hid*l
+            else: # if skip connection is dense (h = h || x)
+                in_channels = cfg.n_hid + cfg.n_hid
             mid_conv = GNNConv('gat_conv', in_channels, cfg.n_hid, cfg.norm,
                                n_heads     = [cfg.n_head, cfg.n_head],
                                iscat       = [True, True],
                                dropout_att = cfg.dropout_att)
             self.mid_convs.append(mid_conv)
-            self.skips.append(SkipConnection(cfg.skip_connection, cfg.n_hid*cfg.n_head))
+            self.skips.append(SkipConnection(cfg.skip_connection, in_channels*cfg.n_head, cfg.n_hid*cfg.n_head))
 
         if cfg.skip_connection != 'dense':
             in_channels = cfg.n_hid
         else: # if skip connection is dense
-            in_channels = cfg.n_hid*(cfg.n_layer-1)
+            in_channels = cfg.n_hid + cfg.n_hid
         self.out_conv = GNNConv('gat_conv', in_channels, cfg.n_class, norm='None',
                                 n_heads     = [cfg.n_head, cfg.n_head_last],
                                 iscat       = [True, False],
                                 dropout_att = cfg.dropout_att)
+        # last skip_connection cannot use dense-skip, because of dim-size must ba n_class
+        self.out_skip = SkipConnection('res', in_channels*cfg.n_head, cfg.n_class)
+
 
     def forward(self, x, edge_index):
         x = F.dropout(x, self.dropout, training=self.training)
-        x = self.in_conv(x, edge_index)
+        h = self.in_conv(x, edge_index)
+        x = self.in_skip(h, x)
         x = F.elu(x)
 
         for mid_conv, skip in zip(self.mid_convs, self.skips):
-            h = F.dropout(x, self.dropout, training=self.training)
-            h = mid_conv(h, edge_index)
-            h = F.elu(h)
+            x = F.dropout(x, self.dropout, training=self.training)
+            h = mid_conv(x, edge_index)
             x = skip(h, x)
+            x = F.elu(x)
 
         x = F.dropout(x, self.dropout, training=self.training)
-        x = self.out_conv(x, edge_index)
+        h = self.out_conv(x, edge_index)
+        x = self.out_skip(h, x)
         return x
 
 

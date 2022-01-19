@@ -439,6 +439,7 @@ TwinGAT_CiteSeer: &TwinGAT_CiteSeer
 
 TwinGAT_PubMed: &TwinGAT_PubMed
   <<: [*Twin, *GAT_PubMed_tuned]
+  n_layer: 6
   activation: ELU # override ReLU >> ELU
   dropout: 0.2
   kernel: mx

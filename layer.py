@@ -109,24 +109,32 @@ class Summarize(nn.Module):
 
 # if cfg.skip_connection is 'vanilla', 'res', 'dense', or 'highway'
 class SkipConnection(nn.Module):
-    def __init__(self, skip_connection, n_hidden):
+    def __init__(self, skip_connection, in_channels, out_channels):
         super(SkipConnection, self).__init__()
         self.skip_connection = skip_connection
+
+        if in_channels == out_channels:
+            self.transformer = Identity()
+        else:
+            self.transformer = Linear(in_channels, out_channels)
+
         if self.skip_connection == 'highway':
-            self.linear = Linear(n_hidden, n_hidden)
+            self.gate_linear = Linear(out_channels, out_channels)
 
     def forward(self, h, x):
         if self.skip_connection == 'vanilla':
             return h
 
-        elif self.skip_connection == 'res':
-            return h + x # maybe h*0.5 + x*0.5
+        else: # if use any skip_connection
+            x = self.transformer(x) # in_channels >> out_channels
+            
+            if self.skip_connection == 'res':
+                return h + x
 
-        elif self.skip_connection == 'dense':
-            return torch.cat([h, x], dim=-1)
+            elif self.skip_connection == 'dense':
+                return torch.cat([h, x], dim=-1)
 
-        elif self.skip_connection == 'highway':
-            gating_weights = torch.sigmoid(self.linear(x))
-            ones = torch.ones_like(gating_weights)
-            return h*gating_weights + x*(ones-gating_weights) # h*W + x*(1-W)
-    
+            elif self.skip_connection == 'highway':
+                gating_weights = torch.sigmoid(self.gate_linear(x))
+                ones = torch.ones_like(gating_weights)
+                return h*gating_weights + x*(ones-gating_weights) # h*W + x*(1-W)
