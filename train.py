@@ -14,6 +14,7 @@ from train_reddit import run as train_reddit
 
 def log_params_from_omegaconf_dict(params):
     for param_name, element in params.items():
+        print('{}: {}'.format(param_name, element))
         mlflow.log_param(param_name, element)
 
 
@@ -22,7 +23,6 @@ def main(cfg: DictConfig):
     cfg_mlflow = cfg.mlflow
     cfg = cfg[cfg.key]
     root = utils.get_original_cwd()
-    print(cfg)
 
     torch.manual_seed(cfg.seed)
     torch.cuda.manual_seed(cfg.seed)

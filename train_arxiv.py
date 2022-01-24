@@ -5,7 +5,7 @@ import torch.nn.functional as F
 import torch_geometric.transforms as T
 from ogb.nodeproppred import PygNodePropPredDataset, Evaluator
 
-from model import return_net
+from models.model_loader import load_net
 
 
 def train(data, model, optimizer):
@@ -37,7 +37,7 @@ def test(data, model, evaluator):
 
 
 def train_and_test(cfg, data, device):
-    model = return_net(cfg).to(device)
+    model = load_net(cfg).to(device)
     optimizer = torch.optim.Adam(params       = model.parameters(), 
                                  lr           = cfg['learning_rate'], 
                                  weight_decay = cfg['weight_decay'])

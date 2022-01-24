@@ -6,8 +6,7 @@ import torch.nn.functional as F
 import torch_geometric.transforms as T
 from torch_geometric.datasets import WebKB
 
-from model import return_net
-
+from models.model_loader import load_net
 
 
 def accuracy(output, labels):
@@ -45,7 +44,7 @@ def test(tri, data, model):
 
 
 def train_and_test(tri, cfg, data, device):
-    model = return_net(cfg).to(device)
+    model = load_net(cfg).to(device)
     optimizer = torch.optim.Adam(params       = model.parameters(), 
                                  lr           = cfg.learning_rate, 
                                  weight_decay = cfg.weight_decay)

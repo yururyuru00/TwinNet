@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from torch_geometric.datasets import Reddit
 from torch_geometric.loader import NeighborSampler
 
-from model_reddit import return_net
+from models.model_loader import load_net
 
 
 def train(data, train_loader, model, optimizer, device):
@@ -51,7 +51,7 @@ def train_and_test(tri, cfg, data, device):
                                   shuffle     = False,
                                   num_workers = 0)
 
-    model = return_net(cfg).to(device)
+    model = load_net(cfg).to(device)
     optimizer = torch.optim.Adam(params       = model.parameters(), 
                                  lr           = cfg['learning_rate'], 
                                  weight_decay = cfg['weight_decay'])

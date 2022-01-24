@@ -1,16 +1,42 @@
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim as optim
 import math
-from tqdm import trange, tqdm
 
-from torch.nn import Module, Parameter, Linear, LSTM
+from torch.nn import Linear
 from torch.nn import LayerNorm, BatchNorm1d, Identity
+from torch_geometric.nn import GATConv, GCNConv, SAGEConv
 
-from torch_geometric.nn import MessagePassing, GATConv, GCNConv, SAGEConv
-from torch_geometric.utils import add_self_loops, degree
+
+# gnn convolution for gpumemory, this is used for only reddit dataset
+def conv_for_gpumemory(x_all, loader, conv, device):
+    if isinstance(x_all, list): # if x_all is [x_all, x_all_], we use twin-sage
+        x_all_ = x_all[1]
+        x_all  = x_all[0]
+        xs, xs_ = [], []
+        for batch_size, n_id, adj in loader:
+            edge_index, _, size = adj.to(device)
+            x, x_ = x_all[n_id].to(device), x_all_[n_id].to(device)
+            x_target = x[:size[1]]
+            x_ = x_[:batch_size] # because x_ do not use aggregate
+
+            x, x_ = conv([(x, x_target), x_], edge_index)
+            xs.append(x)
+            xs_.append(x_)
+        x_all  = torch.cat(xs, dim=0)
+        x_all_ = torch.cat(xs_, dim=0)
+        return x_all, x_all_
+
+    else: # if x_all is x_all, we use sigle-sage
+        xs = []
+        for batch_size, n_id, adj in loader:
+            edge_index, _, size = adj.to(device)
+            x = x_all[n_id].to(device)
+            x_target = x[:size[1]]
+            x = conv((x, x_target), edge_index)
+            xs.append(x)
+        x_all = torch.cat(xs, dim=0)
+        return x_all
 
 
 class GNNConv(nn.Module):
@@ -24,9 +50,9 @@ class GNNConv(nn.Module):
 
         elif conv_name == 'sage_conv':
             self.conv  = SAGEConv(in_channels, out_channels, root_weight=self_loop)
-            self.conv_root     = self.conv.lin_r
-            self.conv_neighbor = self.conv.lin_l
-            self.conv_ = lambda x_: self.conv_root(x_) + self.conv_neighbor(x_)
+            self.lin_root     = self.conv.lin_r
+            self.lin_neighbor = self.conv.lin_l
+            self.conv_ = lambda x_: self.lin_root(x_) + self.lin_neighbor(x_)
 
         elif conv_name == 'gat_conv':
             if iscat[0]: # if previous gatconv's cat is True
@@ -89,7 +115,7 @@ class Summarize(nn.Module):
         
         elif self.kernel == 'sdp':
             alpha = (query * key).sum(dim=-1) / math.sqrt(query.size()[-1])
-        
+
         elif self.kernel == 'wdp':
             alpha = (query * key * self.weight).sum(dim=-1) / math.sqrt(query.size()[-1])
 
@@ -121,20 +147,46 @@ class SkipConnection(nn.Module):
         if self.skip_connection == 'highway':
             self.gate_linear = Linear(out_channels, out_channels)
 
-    def forward(self, h, x):
-        if self.skip_connection == 'vanilla':
-            return h
+    def forward(self, h_x):
+        if isinstance(h_x, list): # if h_x_ is [(h,x), (h_,x_)], we use twin-skip
+            h,  x  = h_x[0]
+            h_, x_ = h_x[1]
+    
+            if self.skip_connection == 'vanilla':
+                return h, h_
 
-        else: # if use any skip_connection
-            x = self.transformer(x) # in_channels >> out_channels
-            
-            if self.skip_connection == 'res':
-                return h + x
+            else: # if use any skip_connection
+                x  = self.transformer(x) # in_channels >> out_channels
+                x_ = self.transformer(x_)
 
-            elif self.skip_connection == 'dense':
-                return torch.cat([h, x], dim=-1)
+                if self.skip_connection == 'res':
+                    return h + x, h_ + x_
 
-            elif self.skip_connection == 'highway':
-                gating_weights = torch.sigmoid(self.gate_linear(x))
-                ones = torch.ones_like(gating_weights)
-                return h*gating_weights + x*(ones-gating_weights) # h*W + x*(1-W)
+                elif self.skip_connection == 'dense':
+                    return torch.cat([h, x], dim=-1), torch.cat([h_, x_], dim=-1)
+
+                elif self.skip_connection == 'highway':
+                    gating_weights = torch.sigmoid(self.gate_linear(x))
+                    ones = torch.ones_like(gating_weights)
+                    return h*gating_weights + x*(ones-gating_weights), \
+                           h_*gating_weights + x_*(ones-gating_weights)
+
+        else: # if h_x_ is (h,x), we use single-skip
+            h,  x  = h_x
+
+            if self.skip_connection == 'vanilla':
+                return h
+
+            else: # if use any skip_connection
+                x  = self.transformer(x) # in_channels >> out_channels
+
+                if self.skip_connection == 'res':
+                    return h + x
+
+                elif self.skip_connection == 'dense':
+                    return torch.cat([h, x], dim=-1)
+
+                elif self.skip_connection == 'highway':
+                    gating_weights = torch.sigmoid(self.gate_linear(x))
+                    ones = torch.ones_like(gating_weights)
+                    return h*gating_weights + x*(ones-gating_weights)

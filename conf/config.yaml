@@ -1,4 +1,4 @@
-key: TwinGAT_Texas
+key: TwinGAT_PubMed
 
 
 # -------hydra & mlflow & optuna-------
@@ -9,15 +9,15 @@ mlflow:
   runname: test
 
 defaults:
-  - override hydra/sweeper: optuna # [basic, optuna]
+  - override hydra/sweeper: basic # [basic, optuna]
 
-hydra:
-  sweeper:
-    sampler:
-      _target_: optuna.samplers.TPESampler
-    direction: maximize
-    n_jobs: 1
-    n_trials: 300
+# hydra:
+#   sweeper:
+#     sampler:
+#       _target_: optuna.samplers.TPESampler
+#     direction: maximize
+#     n_jobs: 1
+#     n_trials: 100
 
 
 # -------datasets (planetoid)-------
@@ -96,7 +96,7 @@ Reddit: &Reddit
   task: transductive
   n_feat: 602
   n_class: 41
-  n_tri: 5
+  n_tri: 3
   epochs: 11 # override >> GNN
 
 PPIinduct: &PPIinduct
@@ -111,6 +111,7 @@ PPIinduct: &PPIinduct
 
 GNN: &GNN
   base_gnn: GNN
+  global_skip_connection: vanilla # [vanilla, jk, twin]
   skip_connection: vanilla # [vanilla, res, dense, highway]
   seed: 42
   epochs: 200
@@ -118,345 +119,139 @@ GNN: &GNN
   norm: None # [None, LayerNorm, BatchNorm1d]
 
 
-# -------model instance (existing study + existing parameters)-------
+# -------model instance-------
 
 # Graph Convolution Networks (GCN)
 GCN: &GCN
   <<: *GNN
+  activation: ReLU
   base_gnn: GCN # override >> GNN
-  n_layer: 2
-  dropout: 0.5
-  learning_rate: 0.01
-  weight_decay: 0.0005
-
-GCN_Cora_exist: &GCN_Cora_exist
-  <<: [*Cora, *GCN]
-  n_hid: 16
-
-GCN_CiteSeer_exist: &GCN_CiteSeer_exist
-  <<: [*CiteSeer, *GCN]
-  n_hid: 16
-
-GCN_PubMed_exist: &GCN_PubMed_exist
-  <<: [*PubMed, *GCN]
-  n_hid: 16
-
-GCN_PPIinduct_exist: &GCN_PPIinduct_exist
-  <<: [*PPIinduct, *GCN]
-  n_hid: 256
-  dropout: 0. # override >> GCN
-  weight_decay: 0. # override >> GCN
-
-GCN_PPI_exist: &GCN_PPI_exist
-  <<: [*PPI, *GCN]
-  n_hid: 256
-  n_layer: 3 # override >> GCN
-  dropout: 0. # override >> GCN
-  weight_decay: 0. # override >> GCN
-
-GCN_Arxiv_exist: &GCN_Arxiv_exist
-  <<: [*Arxiv, *GCN]
-  n_hid: 256
-  n_layer: 3 # override >> GCN
-  weight_decay: 0. # override >> GCN
-  norm: BatchNorm1d # override >> GNN
-
-GCN_Cornell_exist: &GCN_Cornell_exist
-  <<: [*Cornell, *GCN]
-  n_hid: 32 # override >> GCN
-  dropout: 0.5 # override >> GCN
-  learning_rate: 0.05 # override >> GCN
-  weight_decay: 5E-6 # override >> GCN
-
-GCN_Texas_exist: &GCN_Texas_exist
-  <<: [*Texas, *GCN]
-  n_hid: 32 # override >> GCN
-  dropout: 0.5 # override >> GCN
-  learning_rate: 0.05 # override >> GCN
-  weight_decay: 5E-6 # override >> GCN
-
-GCN_Wisconsin_exist: &GCN_Wisconsin_exist
-  <<: [*Wisconsin, *GCN]
-  n_hid: 32 # override >> GCN
-  dropout: 0.5 # override >> GCN
-  learning_rate: 0.05 # override >> GCN
-  weight_decay: 5E-6 # override >> GCN
-
 
 # Graph Attention Networks (GAT)
 GAT: &GAT
   <<: *GNN
+  activation: ELU
   base_gnn: GAT # override >> GNN
-  n_layer: 2
-  dropout: 0.6
-  learning_rate: 0.005
-  weight_decay: 0.0005
   dropout_att: 0.6
   n_head: 8
-  n_head_last: 1
-
-GAT_Cora_exist: &GAT_Cora_exist
-  <<: [*Cora, *GAT]
-  transform: T.NormalizeFeatures() # override >> Cora
-  n_hid: 8
-
-GAT_CiteSeer_exist: &GAT_CiteSeer_exist
-  <<: [*CiteSeer, *GAT]
-  n_hid: 8
-
-GAT_PubMed_exist: &GAT_PubMed_exist
-  <<: [*PubMed, *GAT]
-  n_hid: 8
-  weight_decay: 0.001 # override >> GAT
-  n_head_last: 8 # override >> GAT
-
-GAT_PPIinduct_exist: &GAT_PPIinduct_exist
-  <<: [*PPIinduct, *GAT]
-  n_hid: 256
-  n_layer: 3 # override >> GAT
-  dropout: 0. # override >> GAT
-  weight_decay: 0. # override >> GAT
-  dropout_att: 0. # override >> GAT
-  n_head: 4 # override >> GAT
-  n_head_last: 6 # override >> GAT
-  skip_connection: res # override >> GNN
-
-GAT_Cornell_exist: &GAT_Cornell_exist
-  <<: [*Cornell, *GAT]
-  n_hid: 32 # override >> GAT
-  dropout_att: 0.5  # override >> GAT
-  dropout: 0.5 # override >> GAT
-  learning_rate: 0.05 # override >> GAT
-  weight_decay: 5E-6 # override >> GAT
-
-GAT_Texas_exist: &GAT_Texas_exist
-  <<: [*Texas, *GAT]
-  n_hid: 32 # override >> GAT
-  dropout_att: 0.5  # override >> GAT
-  dropout: 0.5 # override >> GAT
-  learning_rate: 0.05 # override >> GAT
-  weight_decay: 5E-6 # override >> GAT
-
-GAT_Wisconsin_exist: &GAT_Wisconsin_exist
-  <<: [*Wisconsin, *GAT]
-  n_hid: 32 # override >> GAT
-  dropout_att: 0.5  # override >> GAT
-  dropout: 0.5 # override >> GAT
-  learning_rate: 0.05 # override >> GAT
-  weight_decay: 5E-6 # override >> GAT
-
-# cannot exe 'GAT_Reddit' because of out of memory
-
-# cannot exe 'GAT_PPI' because of out of memory
-
-# cannot exe 'GAT_Arxiv' because of out of memory
-
+  n_head_last: 8
 
 # Graph SAGE (SAGE)
 SAGE: &SAGE
   <<: *GNN
+  activation: ReLU
   base_gnn: SAGE # override >> GNN
+
+
+# -------model instance + dataset-------
+
+GAT_PubMed: &GAT_PubMed
+  <<: [*PubMed, *GAT]
+  norm: BatchNorm1d
+  n_layer: 2
+  n_hid: 16
+  dropout: 0.2
+  learning_rate: 0.001
+  weight_decay: 0.001
+
+GAT_PPIinduct: &GAT_PPIinduct
+  <<: [*PPIinduct, *GAT]
+  skip_connection: highway
+  norm: BatchNorm1d
   n_layer: 3
-  dropout: 0.
-  learning_rate: 0.01
-  weight_decay: 0.
-
-SAGE_PPIinduct_exist: &SAGE_PPIinduct_exist
-  <<: [*PPIinduct, *SAGE]
   n_hid: 256
-  learning_rate: 0.005 # override >> SAGE
+  n_head: 4
+  n_head_last: 6
+  dropout: 0
+  dropout_att: 0
+  learning_rate: 0.001
+  weight_decay: 0
 
-SAGE_Reddit_exist: &SAGE_Reddit_exist
+GCN_Arxiv: &GCN_Arxiv
+  <<: [*Arxiv, *GCN]
+  norm: BatchNorm1d
+  n_layer: 5
+  n_hid: 256
+  dropout: 0.5
+  learning_rate: 0.001
+  weight_decay: 0
+
+SAGE_Reddit: &SAGE_Reddit
   <<: [*Reddit, *SAGE]
-  n_hid: 128
-  n_layer: 2 # override >> SAGE
+  norm: BatchNorm1d
+  n_layer: 3
+  n_hid: 256
+  dropout: 0.6
+  learning_rate: 0.001
+  weight_decay: 0.0001  
 
-SAGE_PPI_exist: &SAGE_PPI_exist
+SAGE_PPI: &SAGE_PPI
   <<: [*PPI, *SAGE]
+  norm: BatchNorm1d
+  n_layer: 4
   n_hid: 256
-
-SAGE_Arxiv_exist: &SAGE_Arxiv_exist
-  <<: [*Arxiv, *SAGE]
-  n_hid: 256
-  dropout: 0.5 # override >> SAGE
-  norm: BatchNorm1d # override >> GNN
+  dropout: 0.6
+  lerning_rate: 0.005
+  weight_decay: 0
 
 
-# -------model instance (existing study + tuned parameters)-------
-
-GCN_Cora_tuned: &GCN_Cora_tuned
-  <<: [*GCN_Cora_exist]
-  n_hid: 32 # 16 >> 32
-  dropout: 0. # 0.5 >> 0.
-  learning_rate: 0.001 # 0.01 >> 0.001
-  weight_decay: 0.001 # 0.0005 >> 0.001
-
-GCN_CiteSeer_tuned: &GCN_CiteSeer_tuned
-  <<: [*GCN_CiteSeer_exist]
-  n_hid: 32 # 16 >> 32
-  dropout: 0.6 # 0.5 >> 0.6
-  learning_rate: 0.005 # 0.01 >> 0.005
-  weight_decay: 0.0001 # 0.0005 >> 0.0001
-
-GCN_PubMed_tuned: &GCN_PubMed_tuned
-  <<: [*GCN_PubMed_exist]
-  n_hid: 32 # 16 >> 32
-  dropout: 0.6 # 0.5 >> 0.6
-  weight_decay: 0.001 # 0.0005 >> 0.001
-  norm: LayerNorm # None >> LayerNorm
-
-GCN_PPI_tuned: &GCN_PPI_tuned
-  <<: [*GCN_PPI_exist]
-  n_hid: 128 # override 256 >> 128
-  dropout: 0.6 # override 0. >> 0.6
-  learning_rate: 0.001 # override 0.01 >> 0.001
-  n_layer: 2 # override 3 >> 2
-
-GCN_Arxiv_tuned: &GCN_Arxiv_tuned
-  <<: [*GCN_Arxiv_exist]
-  learning_rate: 0.001 # override 0.01 >> 0.001
-  n_layer: 5 # override 3 >> 5
+# Jumping Knowledge Networks (JKNet)
+JK: &JK
+  global_skip_connection: jk # [vanilla, jk, twin]
+  jk_mode: cat # [cat, max, lstm]
 
 
-GAT_Cora_tuned: &GAT_Cora_tuned
-  <<: [*GAT_Cora_exist]
-  dropout: 0. # override 0.6 >> 0.
-  learning_rate: 0.01 # override 0.005 >> 0.01
-  weight_decay: 0.0001 # override 0.0005 >> 0.0001
+JKGAT_PubMed: &JKGAT_PubMed
+  <<: [*JK, *GAT_PubMed]
 
-GAT_CiteSeer_tuned: &GAT_CiteSeer_tuned
-  <<: [*GAT_CiteSeer_exist]
-  n_hid: 16 # override 8 >> 16
-  dropout: 0. # override 0.6 >> 0.
-  learning_rate: 0.01 # override 0.005 >> 0.01
+JKGAT_PPIinduct: &JKGAT_PPIinduct
+  <<: [*JK, *GAT_PPIinduct]
 
-GAT_PubMed_tuned: &GAT_PubMed_tuned
-  <<: [*GAT_PubMed_exist]
-  n_hid: 16 # override 8 >> 16
-  dropout: 0. # override 0.6 >> 0.
-  learning_rate: 0.01 # override 0.005 >> 0.01
-  weight_decay: 0. # override 0.001 >> 0.
-  norm: BatchNorm1d # override None >> BatchNorm1d
+JKGCN_Arxiv: &JKGCN_Arxiv
+  <<: [*JK, *GCN_Arxiv]
 
-GAT_PPIinduct_tuned: &GAT_PPIinduct_tuned
-  <<: [*GAT_PPIinduct_exist]
-  n_hid: 128 # override 256 >> 128
-  learning_rate: 0.001 # override 0.005 >> 0.001
+JKSAGE_Reddit: &JKSAGE_Reddit
+  <<: [*JK, *SAGE_Reddit]
 
-
-SAGE_Reddit_tuned: &SAGE_Reddit_tuned
-  <<: [*SAGE_Reddit_exist]
-  n_hid: 256 # override 128 >> 256
-  dropout: 0.6 # override 0. >> 0.6
-  learning_rate: 0.001 # override 0.01 >> 0.001
-  weight_decay: 0.0001 # override 0. >> 0.0001
-  norm: BatchNorm1d # override None >> BatchNorm1d
-  n_layer: 3 # override 2 >> 3
-  epochs: 21 # override 11 > 21
-
-SAGE_PPI_tuned: &SAGE_PPI_tuned
-  <<: [*SAGE_PPI_exist]
-  dropout: 0.6 # override 0. >> 0.6
-  learning_rate: 0.005 # override 0.01 >> 0.005
-  norm: BatchNorm1d # override None >> BatchNorm1d
-  n_layer: 4 # override 3 >> 4
-
-SAGE_Arxiv_tuned: &SAGE_Arxiv_tuned
-  <<: [*SAGE_Arxiv_exist]
-  learning_rate: 0.001 # override 0.01 >> 0.001
-  n_layer: 5 # override 3 >> 5
+JKSAGE_PPI: &JKSAGE_PPI
+  <<: [*JK, *SAGE_PPI]
 
 
 
 # -------model instance (our study)-------
 
-# Twin-Graph Convolution Networks (Twin-GCN)
+# Twin-Graph Neural Networks (Twin-GNN)
 Twin: &Twin
-  skip_connection: summarize
+  global_skip_connection: twin # [vanilla, jk, twin]
   temparature: 1 # \in R
   scope: local # [local, global]
-  kernel: ad # [dp, sdp, wdp, ad, mx]
-  activation: ReLU # [ReLU, Identity]
+  kernel: sdp # [dp, sdp, wdp, ad, mx]
   self_loop: True # [True, False]
 
 
-TwinGCN_Cora: &TwinGCN_Cora
-  <<: [*Twin, *GCN_Cora_tuned]
-
-TwinGCN_CiteSeer: &TwinGCN_CiteSeer
-  <<: [*Twin, *GCN_CiteSeer_tuned]
-
-TwinGCN_PubMed: &TwinGCN_PubMed
-  <<: [*Twin, *GCN_PubMed_tuned]
-
-TwinGCN_Arxiv: &TwinGCN_Arxiv
-  <<: [*Twin, *GCN_Arxiv_tuned]
-
-TwinGCN_PPI: &TwinGCN_PPI
-  <<: [*Twin, *GCN_PPI_tuned]
-
-TwinGCN_PPIinduct: &TwinGCN_PPIinduct
-  <<: [*Twin, *GCN_PPIinduct_exist]
-
-TwinGCN_Cornell: &TwinGCN_Cornell
-  <<: [*Twin, *GCN_Cornell_exist]
-
-TwinGCN_Texas: &TwinGCN_Texas
-  <<: [*Twin, *GCN_Texas_exist]
-
-TwinGCN_Wisconsin: &TwinGCN_Wisconsin
-  <<: [*Twin, *GCN_Wisconsin_exist]
-
-
-TwinSAGE_Arxiv: &TwinSAGE_Arxiv
-  <<: [*Twin, *SAGE_Arxiv_tuned]
-
-TwinSAGE_PPI: &TwinSAGE_PPI
-  <<: [*Twin, *SAGE_PPI_tuned]
-
-TwinSAGE_PPIinduct: &TwinSAGE_PPIinduct
-  <<: [*Twin, *SAGE_PPIinduct_exist]
-
-TwinSAGE_Reddit: &TwinSAGE_Reddit
-  <<: [*Twin, *SAGE_Reddit_tuned]
-
-
-TwinGAT_Cora: &TwinGAT_Cora
-  <<: [*Twin, *GAT_Cora_tuned]
-  activation: Identity # override ReLU >> Identity
-  dropout: 0.6 # override 0 >> 0.6
-  kernel: dp
-  learning_rate: 0.001 # override 0.01 >> 0.001
-  n_hid: 16 # override 8 >> 16
-  norm: BatchNorm1d # override None >> BatchNorm1d
-  temparature: -0.9 # override 1 >> -0.9
-  weight_decay: 0.001 # override 0.0001 >> 0.001
-
-
-TwinGAT_CiteSeer: &TwinGAT_CiteSeer
-  <<: [*Twin, *GAT_CiteSeer_tuned]
-  activation: ELU # override ReLU >> ELU
-
 TwinGAT_PubMed: &TwinGAT_PubMed
-  <<: [*Twin, *GAT_PubMed_tuned]
+  <<: [*Twin, *GAT_PubMed]
   n_layer: 6
-  activation: ELU # override ReLU >> ELU
-  dropout: 0.2
   kernel: mx
-  learning_rate: 0.001
   temparature: -0.7
-  weight_decay: 0.001
-
 
 TwinGAT_PPIinduct: &TwinGAT_PPIinduct
-  <<: [*Twin, *GAT_PPIinduct_tuned]
-  activation: ELU # [ELU, Identity] # override >> Twin
+  <<: [*Twin, *GAT_PPIinduct]
+  n_layer: 6
+  kernel: mx # maybe sdp
 
-TwinGAT_Cornell: &TwinGAT_Cornell
-  <<: [*Twin, *GCN_Cornell_exist]
+TwinGCN_Arxiv: &TwinGCN_Arxiv
+  <<: [*Twin, *GCN_Arxiv]
+  n_layer: 6
+  kernel: mx
+  temparature: -0.7
 
-TwinGAT_Texas: &TwinGAT_Texas
-  <<: [*Twin, *GCN_Texas_exist]
+TwinSAGE_Reddit: &TwinSAGE_Reddit
+  <<: [*Twin, *SAGE_Reddit]
+  # not yet tuning
 
-TwinGAT_Wisconsin: &TwinGAT_Wisconsin
-  <<: [*Twin, *GCN_Wisconsin_exist]
+TwinSAGE_PPI: &TwinSAGE_PPI
+  <<: [*Twin, *SAGE_PPI]
+  n_layer: 8
+  kernel: wdp # maybe sdp
+  temparature: 0.5
