@@ -33,7 +33,7 @@ class SAGE(nn.Module):
         x_target = x[:out_adj.size[1]]
         x = self.out_conv((x, x_target), out_adj.edge_index)
     
-        return x
+        return x, None
 
     def inference(self, x, loader, device):
         # we do not use dropout because inferense is test
@@ -46,4 +46,4 @@ class SAGE(nn.Module):
 
         x = conv_for_gpumemory(x, loader, self.out_conv, device)
         
-        return x
+        return x, None

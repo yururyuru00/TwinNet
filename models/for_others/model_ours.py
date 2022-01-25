@@ -41,8 +41,8 @@ class TwinGCN(nn.Module):
             hs.append(x)
             hs_.append(x_)
 
-        h = self.summarize(hs, hs_)  # hs and hs_ is [h^1,h^2,...,h^L], each h^l is (n, d). # if dense, (n, 2d)
-        return self.out_lin(h)
+        h, alpha = self.summarize(hs, hs_)  # hs and hs_ is [h^1,h^2,...,h^L], each h^l is (n, d). # if dense, (n, 2d)
+        return self.out_lin(h), alpha
 
 
 # TwinSAGE do not use skip-connection because SAGE already use skip-connection (h = AxW + xW_)
@@ -74,8 +74,8 @@ class TwinSAGE(nn.Module):
             hs.append(x)
             hs_.append(x_)
 
-        h = self.summarize(hs, hs_) # xs = [h^1,h^2,...,h^L], each h^l is (n, d)
-        return self.out_lin(h)
+        h, alpha = self.summarize(hs, hs_) # xs = [h^1,h^2,...,h^L], each h^l is (n, d)
+        return self.out_lin(h), alpha
 
 
 class TwinGAT(nn.Module):
@@ -125,5 +125,5 @@ class TwinGAT(nn.Module):
             hs.append(x)
             hs_.append(x_)
 
-        h = self.summarize(hs, hs_) # hs = [h^1,h^2,...,h^L], each h^l is (n, d)
-        return self.out_lin(h)
+        h, alpha = self.summarize(hs, hs_) # hs = [h^1,h^2,...,h^L], each h^l is (n, d)
+        return self.out_lin(h), alpha

@@ -19,7 +19,7 @@ def train(tri, data, model, optimizer):
     model.train()
     optimizer.zero_grad()
 
-    h = model(data.x, data.edge_index)
+    h, alpha = model(data.x, data.edge_index)
     prob_labels = F.log_softmax(h, dim=1)
     loss_train  = F.nll_loss(prob_labels[data.train_mask[:,tri]], data.y[data.train_mask[:,tri]])
     loss_train.backward()
@@ -27,7 +27,7 @@ def train(tri, data, model, optimizer):
 
     # validation
     model.eval()
-    h = model(data.x, data.edge_index)
+    h, alpha = model(data.x, data.edge_index)
     prob_labels_val = F.log_softmax(h, dim=1)
     loss_val = F.nll_loss(prob_labels_val[data.val_mask[:,tri]], data.y[data.val_mask[:,tri]])
 
@@ -36,7 +36,7 @@ def train(tri, data, model, optimizer):
 
 def test(tri, data, model):
     model.eval()
-    h = model(data.x, data.edge_index)
+    h, alpha = model(data.x, data.edge_index)
     prob_labels_test = F.log_softmax(h, dim=1)
     acc = accuracy(prob_labels_test[data.test_mask[:,tri]], data.y[data.test_mask[:,tri]])
 
@@ -77,4 +77,4 @@ def run(cfg, root, device):
         test_acc = train_and_test(tri, cfg, data, device)
         test_acces.append(test_acc.to('cpu').item())
 
-    return test_acces
+    return test_acces, None

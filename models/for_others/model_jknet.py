@@ -1,8 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
 
-from ..layer import GNNConv, SkipConnection
-from torch_geometric.nn import JumpingKnowledge
+from ..layer import GNNConv, SkipConnection, JumpingKnowledge
 
 
 class JKGCN(nn.Module):
@@ -40,8 +39,8 @@ class JKGCN(nn.Module):
             x = F.dropout(x,  self.dropout, training=self.training)
             hs.append(x)
 
-        h = self.jk(hs)  # hs and hs_ is [h^1,h^2,...,h^L], each h^l is (n, d). # if dense, (n, 2d)
-        return self.out_lin(h)
+        h, alpha = self.jk(hs)  # hs and hs_ is [h^1,h^2,...,h^L], each h^l is (n, d). # if dense, (n, 2d)
+        return self.out_lin(h), alpha
 
 
 # JKSAGE do not use skip-connection because SAGE already use skip-connection (h = AxW + xW_)
@@ -71,8 +70,8 @@ class JKSAGE(nn.Module):
             x = F.dropout(x,  self.dropout, training=self.training)
             hs.append(x)
 
-        h = self.jk(hs) # xs = [h^1,h^2,...,h^L], each h^l is (n, d)
-        return self.out_lin(h)
+        h, alpha = self.jk(hs) # xs = [h^1,h^2,...,h^L], each h^l is (n, d)
+        return self.out_lin(h), alpha
 
 
 class JKGAT(nn.Module):
@@ -102,12 +101,12 @@ class JKGAT(nn.Module):
             self.skips.append(SkipConnection(cfg.skip_connection, in_channels*cfg.n_head, cfg.n_hid*cfg.n_head))
 
         self.jk = JumpingKnowledge(mode       = cfg.jk_mode, 
-                                   channels   = cfg.n_hid,
+                                   channels   = in_channels*cfg.n_head,
                                    num_layers = cfg.n_layer)
         if cfg.jk_mode == 'cat':
-            self.out_lin = nn.Linear(cfg.n_hid*cfg.n_layer, cfg.n_class)
+            self.out_lin = nn.Linear(in_channels*cfg.n_head*cfg.n_layer, cfg.n_class)
         else: # if jk_mode == 'max' or 'lstm'
-            self.out_lin = nn.Linear(cfg.n_hid, cfg.n_class)
+            self.out_lin = nn.Linear(in_channels*cfg.n_head, cfg.n_class)
 
     def forward(self, x, edge_index):
         hs = []
@@ -118,5 +117,5 @@ class JKGAT(nn.Module):
             x = F.elu(x)
             hs.append(x)
 
-        h = self.jk(hs) # hs = [h^1,h^2,...,h^L], each h^l is (n, d)
-        return self.out_lin(h)
+        h, alpha = self.jk(hs) # hs = [h^1,h^2,...,h^L], each h^l is (n, d)
+        return self.out_lin(h), alpha

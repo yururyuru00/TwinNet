@@ -14,7 +14,7 @@ def train(data, train_loader, model, optimizer, device):
     for batch_id, (batch_size, n_id, adjs) in enumerate(train_loader):
         adjs = [adj.to(device) for adj in adjs]
         optimizer.zero_grad()
-        h = model(data.x[n_id], adjs, batch_size)
+        h, alpha = model(data.x[n_id], adjs, batch_size)
         prob_labels = F.log_softmax(h, dim=1)
         loss = F.nll_loss(prob_labels, data.y[n_id[:batch_size]])
         loss.backward()
@@ -72,5 +72,5 @@ def run(cfg, root, device):
         test_acc = train_and_test(tri, cfg, data, device)
         test_acces.append(test_acc)
 
-    return test_acces
+    return test_acces, None
         

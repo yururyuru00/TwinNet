@@ -1,4 +1,6 @@
 from tqdm import tqdm
+import numpy as np
+import mlflow
 
 import torch
 import torch.nn.functional as F
@@ -11,14 +13,14 @@ from models.model_loader import load_net
 def accuracy(output, labels):
     preds = output.max(1)[1].type_as(labels)
     correct = preds.eq(labels).double()
-    return correct.sum() / len(labels)
+    return correct.sum() / len(labels), correct
 
 
 def train(data, model, optimizer):
     model.train()
     optimizer.zero_grad()
 
-    h = model(data.x, data.edge_index)
+    h, _ = model(data.x, data.edge_index)
     prob_labels = F.log_softmax(h, dim=1)
     loss_train  = F.nll_loss(prob_labels[data.train_mask], data.y[data.train_mask])
     loss_train.backward()
@@ -26,7 +28,7 @@ def train(data, model, optimizer):
 
     # validation
     model.eval()
-    h = model(data.x, data.edge_index)
+    h, _ = model(data.x, data.edge_index)
     prob_labels_val = F.log_softmax(h, dim=1)
     loss_val = F.nll_loss(prob_labels_val[data.val_mask], data.y[data.val_mask])
 
@@ -35,11 +37,11 @@ def train(data, model, optimizer):
 
 def test(data, model):
     model.eval()
-    h = model(data.x, data.edge_index)
+    h, alpha = model(data.x, data.edge_index)
     prob_labels_test = F.log_softmax(h, dim=1)
-    acc = accuracy(prob_labels_test[data.test_mask], data.y[data.test_mask])
+    acc, correct = accuracy(prob_labels_test[data.test_mask], data.y[data.test_mask])
 
-    return acc
+    return acc, alpha, correct
 
 
 def train_and_test(cfg, data, device):
@@ -61,8 +63,7 @@ def train_and_test(cfg, data, device):
         if bad_counter == cfg.patience:
             break
 
-    test_acc = test(data, model)
-    return test_acc
+    return test(data, model)
 
 
 def run(cfg, root, device):
@@ -72,9 +73,11 @@ def run(cfg, root, device):
                         transform     = eval(cfg.transform))
     data = dataset[0].to(device)
 
-    test_acces = []
+    test_acces, artifacts = [], {}
     for tri in tqdm(range(cfg.n_tri)):
-        test_acc = train_and_test(cfg, data, device)
+        test_acc, alpha, correct = train_and_test(cfg, data, device)
         test_acces.append(test_acc.to('cpu').item())
-        
-    return test_acces
+        artifacts['alpha_{}.npy'.format(tri)] = alpha
+        artifacts['correct_test_{}.npy'.format(tri)] = correct
+
+    return test_acces, artifacts

@@ -40,7 +40,7 @@ class GCN(nn.Module):
             x = F.dropout(x, self.dropout, training=self.training)
         
         x = self.out_conv(x, edge_index)
-        return x
+        return x, None
 
 
 # SAGE do not use skip-connection because SAGE already use skip-connection (h = AxW + xW_)
@@ -66,7 +66,7 @@ class SAGE(nn.Module):
             x = F.dropout(x, self.dropout, training=self.training)
 
         x = self.out_conv(x, edge_index)
-        return x
+        return x, None
 
 
 class GAT(nn.Module):
@@ -116,4 +116,4 @@ class GAT(nn.Module):
 
         x = F.dropout(x, self.dropout, training=self.training)
         x = self.out_conv(x, edge_index)
-        return x
+        return x, None

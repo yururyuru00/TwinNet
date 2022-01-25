@@ -15,7 +15,7 @@ def train(loader, model, optimizer, device):
     for batch_id, data in enumerate(loader): # in [g1, g2, ..., g20]
         data = data.to(device)
         optimizer.zero_grad()
-        out = model(data.x, data.edge_index)
+        out, alpha = model(data.x, data.edge_index)
         loss = criteria(out[data.train_mask], data.y[data.train_mask])
         loss.backward()
         optimizer.step()
@@ -28,7 +28,7 @@ def test(loader, model, evaluator, device):
     ys, preds, alphas = [], [], []
     for data in loader: # only one graph (=g1+g2)
         data = data.to(device)
-        out = model(data.x, data.edge_index)
+        out, alpha = model(data.x, data.edge_index)
         mask = data['test_mask']
         ys.append(data.y[mask].cpu())
         preds.append(out[mask].cpu())
@@ -86,4 +86,4 @@ def run(cfg, root, device):
         test_acc = train_and_test(tri, cfg, data, device)
         test_acces.append(test_acc)
 
-    return test_acces
+    return test_acces, None

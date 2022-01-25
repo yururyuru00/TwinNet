@@ -15,7 +15,7 @@ def train(loader, model, optimizer, device):
     for batch_id, data in enumerate(loader): # in [g1, g2, ..., g20]
         data = data.to(device)
         optimizer.zero_grad()
-        out = model(data.x, data.edge_index)
+        out, alpha = model(data.x, data.edge_index)
         loss = criteria(out, data.y)
         loss.backward()
         optimizer.step()
@@ -29,7 +29,7 @@ def test(loader, model, device):
     for data in loader: # only one graph (=g1+g2)
         data = data.to(device)
         ys.append(data.y)
-        out = model(data.x, data.edge_index)
+        out, alpha = model(data.x, data.edge_index)
         preds.append((out > 0).float().cpu())
 
     y    = torch.cat(ys, dim=0).to('cpu').detach().numpy().copy()
@@ -66,4 +66,4 @@ def run(cfg, root, device):
         test_acc = train_and_test(cfg, data_loader, device)
         test_acces.append(test_acc)
 
-    return test_acces
+    return test_acces, None

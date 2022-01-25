@@ -1,4 +1,4 @@
-key: TwinGAT_PubMed
+key: GAT_PubMed
 
 
 # -------hydra & mlflow & optuna-------
@@ -80,7 +80,7 @@ PPI: &PPI
   n_feat: 1 # num. of node feat
   e_feat: 8 # num. of edge feat
   n_class: 112
-  n_tri: 5
+  n_tri: 3
   epochs: 1000 # override >> GNN
 
 Arxiv: &Arxiv
@@ -191,7 +191,7 @@ SAGE_PPI: &SAGE_PPI
   n_layer: 4
   n_hid: 256
   dropout: 0.6
-  lerning_rate: 0.005
+  learning_rate: 0.005
   weight_decay: 0
 
 

@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
 
-from ..layer import Summarize, GNNConv, conv_for_gpumemory
+from ..layer import conv_for_gpumemory, Summarize, GNNConv
 
 
 # TwinSAGE do not use skip-connection because SAGE already use skip-connection (h = AxW + xW_)
@@ -35,8 +35,8 @@ class TwinSAGE(nn.Module):
             hs_.append(x_)
         hs  = [h[:batch_size] for h in hs]
 
-        h = self.summarize(hs, hs_) # hs = [h^1,h^2,...,h^L], each h^l is (n, d)
-        return self.out_lin(h)
+        h, alpha = self.summarize(hs, hs_) # hs = [h^1,h^2,...,h^L], each h^l is (n, d)
+        return self.out_lin(h), alpha
 
     def inference(self, x, loader, device):
         # we do not use dropout because inferense is test
@@ -48,5 +48,5 @@ class TwinSAGE(nn.Module):
             hs.append(x)
             hs_.append(x_)
 
-        h = self.summarize(hs, hs_)
-        return self.out_lin(h)
+        h, alpha = self.summarize(hs, hs_)
+        return self.out_lin(h), alpha

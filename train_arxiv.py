@@ -12,7 +12,7 @@ def train(data, model, optimizer):
     model.train()
 
     optimizer.zero_grad()
-    out = model(data.x, data.adj_t)
+    out, alpha = model(data.x, data.adj_t)
     out = out.log_softmax(dim=-1)
     out = out[data['train_mask']]
     loss = F.nll_loss(out, data.y.squeeze(1)[data['train_mask']])
@@ -24,7 +24,7 @@ def train(data, model, optimizer):
 def test(data, model, evaluator):
     model.eval()
 
-    out = model(data.x, data.adj_t)
+    out, alpha = model(data.x, data.adj_t)
     y_pred = out.argmax(dim=-1, keepdim=True)
     
     mask = data['test_mask']
@@ -69,4 +69,4 @@ def run(cfg, root, device):
         test_acc = train_and_test(cfg, data, device)
         test_acces.append(test_acc)
 
-    return test_acces
+    return test_acces, None
