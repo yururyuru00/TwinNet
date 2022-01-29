@@ -25,20 +25,25 @@ def train(loader, model, optimizer, device):
 def test(loader, model, device):
     model.eval()
 
-    ys, preds = [], []
-    for data in loader: # only one graph (=g1+g2)
-        data = data.to(device)
-        ys.append(data.y)
-        out, alpha = model(data.x, data.edge_index)
-        preds.append((out > 0).float().cpu())
+    ys = {'valid': [], 'test': []}
+    preds = {'valid': [], 'test': []}
+    for mask in ['valid', 'test']:
+        for data in loader[mask]: # only one batch (=g1+g2)
+            data = data.to(device)
+            ys[mask].append(data.y)
+            out, alpha = model(data.x, data.edge_index)
+            preds[mask].append((out > 0).float().cpu())
 
-    y    = torch.cat(ys, dim=0).to('cpu').detach().numpy().copy()
-    pred = torch.cat(preds, dim=0).to('cpu').detach().numpy().copy()
-    return f1_score(y, pred, average='micro') if pred.sum() > 0 else 0
+    y_valid    = torch.cat(ys['valid'], dim=0).to('cpu').detach().numpy().copy()
+    pred_valid = torch.cat(preds['valid'], dim=0).to('cpu').detach().numpy().copy()
+    y_test    = torch.cat(ys['test'], dim=0).to('cpu').detach().numpy().copy()
+    pred_test = torch.cat(preds['test'], dim=0).to('cpu').detach().numpy().copy()
+    return f1_score(y_valid, pred_valid, average='micro') if pred_valid.sum() > 0 else 0, \
+           f1_score(y_test, pred_test, average='micro') if pred_test.sum() > 0 else 0
 
 
 def train_and_test(cfg, data_loader, device):
-    train_loader, val_loader, test_loader = data_loader
+    train_loader, valid_loader, test_loader = data_loader
 
     model = load_net(cfg).to(device)
     optimizer = torch.optim.Adam(params       = model.parameters(), 
@@ -47,23 +52,24 @@ def train_and_test(cfg, data_loader, device):
 
     for epoch in tqdm(range(1, cfg['epochs'])):
         train(train_loader, model, optimizer, device)
-    test_acc = test(test_loader, model, device)
 
-    return test_acc
+    loader = {'valid': valid_loader, 'test': test_loader}
+    return test(loader, model, device)
 
 
 def run(cfg, root, device):
     train_dataset = PPI(root+'/data/'+cfg.dataset, split='train')
-    val_dataset   = PPI(root+'/data/'+cfg.dataset, split='val')
+    valid_dataset   = PPI(root+'/data/'+cfg.dataset, split='val')
     test_dataset  = PPI(root+'/data/'+cfg.dataset, split='test')
     train_loader = DataLoader(train_dataset, batch_size=1, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=2, shuffle=False)
+    valid_loader = DataLoader(valid_dataset, batch_size=2, shuffle=False)
     test_loader = DataLoader(test_dataset, batch_size=2, shuffle=False)
-    data_loader = [train_loader, val_loader, test_loader]
+    data_loader = [train_loader, valid_loader, test_loader]
 
-    test_acces = []
+    valid_acces, test_acces = [], []
     for tri in range(cfg['n_tri']):
-        test_acc = train_and_test(cfg, data_loader, device)
+        valid_acc, test_acc = train_and_test(cfg, data_loader, device)
+        valid_acces.append(valid_acc)
         test_acces.append(test_acc)
 
-    return test_acces, None
+    return valid_acces, test_acces, None

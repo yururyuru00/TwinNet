@@ -25,12 +25,13 @@ def train(data, train_loader, model, optimizer, device):
 def test(data, test_loader, model, device):
     model.eval()
 
-    h = model.inference(data.x, test_loader, device)
+    h, alpha = model.inference(data.x, test_loader, device)
     y_true = data.y.unsqueeze(-1)
     y_pred = h.argmax(dim=-1, keepdim=True)
+    valid_acc = int(y_pred[data.val_mask].eq(y_true[data.val_mask]).sum()) / int(data.val_mask.sum())
     test_acc = int(y_pred[data.test_mask].eq(y_true[data.test_mask]).sum()) / int(data.test_mask.sum())
 
-    return test_acc
+    return valid_acc, test_acc
 
 
 def train_and_test(tri, cfg, data, device):
@@ -58,19 +59,19 @@ def train_and_test(tri, cfg, data, device):
     
     for epoch in tqdm(range(1, cfg['epochs'])):
         train(data, train_loader, model, optimizer, device)
-    test_acc = test(data, test_loader, model, device)
 
-    return test_acc
+    return test(data, test_loader, model, device)
 
 
 def run(cfg, root, device):
     dataset = Reddit(root = root+'/data/'+cfg.dataset)
     data = dataset[0].to(device)
 
-    test_acces = []
+    valid_acces, test_acces = [], []
     for tri in range(cfg['n_tri']):
-        test_acc = train_and_test(tri, cfg, data, device)
+        valid_acc, test_acc = train_and_test(tri, cfg, data, device)
+        valid_acces.append(valid_acc)
         test_acces.append(test_acc)
 
-    return test_acces, None
+    return valid_acces, test_acces, None
         

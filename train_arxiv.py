@@ -33,12 +33,12 @@ def test(data, model, evaluator):
     out, alpha = model(data.x, data.adj_t)
     y_pred = out.argmax(dim=-1, keepdim=True)
     
-    mask = data['test_mask']
-    test_acc = evaluator.eval({'y_true': data.y[mask],
-                               'y_pred': y_pred[mask],})['acc']
-    whole_correct = acc(data.y, y_pred)
+    valid_acc = evaluator.eval({'y_true': data.y[data['valid_mask']],
+                                'y_pred': y_pred[data['valid_mask']],})['acc']
+    test_acc = evaluator.eval({'y_true': data.y[data['test_mask']],
+                               'y_pred': y_pred[data['test_mask']],})['acc']
     
-    return test_acc, alpha, whole_correct
+    return valid_acc, test_acc
 
 
 def train_and_test(cfg, data, device):
@@ -50,9 +50,9 @@ def train_and_test(cfg, data, device):
 
     for epoch in tqdm(range(1, cfg['epochs'])):
         train(data, model, optimizer)
-    test_acc = test(data, model, evaluator)
 
-    return test_acc
+    return test(data, model, evaluator)
+
 
 
 def run(cfg, root, device):
@@ -69,11 +69,10 @@ def run(cfg, root, device):
         mask[splitted_idx[split]] = True
         data[f'{split}_mask'] = mask
 
-    test_acces, artifacts = [], {}
+    valid_acces, test_acces = [], []
     for tri in range(cfg['n_tri']):
-        test_acc, alpha, correct = train_and_test(cfg, data, device)
+        valid_acc, test_acc = train_and_test(cfg, data, device)
+        valid_acces.append(valid_acc)
         test_acces.append(test_acc)
-        artifacts['alpha_{}.npy'.format(tri)] = alpha
-        artifacts['correct_{}.npy'.format(tri)] = correct
 
-    return test_acces, artifacts
+    return valid_acces, test_acces, None

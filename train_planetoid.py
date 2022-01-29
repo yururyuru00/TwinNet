@@ -31,8 +31,9 @@ def train(data, model, optimizer):
     h, _ = model(data.x, data.edge_index)
     prob_labels_val = F.log_softmax(h, dim=1)
     loss_val = F.nll_loss(prob_labels_val[data.val_mask], data.y[data.val_mask])
+    acc_val, _ = accuracy(prob_labels_val[data.val_mask], data.y[data.val_mask])
 
-    return loss_val.item()
+    return loss_val.item(), acc_val
 
 
 def test(data, model):
@@ -54,7 +55,7 @@ def train_and_test(cfg, data, device):
     best_loss = 100.
     bad_counter = 0
     for epoch in range(1, cfg.epochs):
-        loss_val = train(data, model, optimizer)
+        loss_val, acc_val = train(data, model, optimizer)
 
         if loss_val < best_loss:
             best_loss = loss_val
@@ -63,22 +64,30 @@ def train_and_test(cfg, data, device):
             bad_counter += 1
         if bad_counter == cfg.patience:
             break
+    acc_test, alpha, whole_node_correct = test(data, model)
 
-    return test(data, model)
+    return acc_val, acc_test, alpha, whole_node_correct
 
 
 def run(cfg, root, device):
+    if cfg.x_normalize:
+        print('yess')
+        transforms = T.Compose([T.RandomNodeSplit(num_val=500, num_test=500),
+                                T.NormalizeFeatures()])
+    else:
+        print('nooo')
+        transforms = T.Compose([T.RandomNodeSplit(num_val=500, num_test=500)])
     dataset = Planetoid(root          = root + '/data/' + cfg.dataset,
                         name          = cfg.dataset,
-                        split         = cfg.split,
-                        transform     = eval(cfg.transform))
+                        transform     = transforms)
     data = dataset[0].to(device)
 
-    test_acces, artifacts = [], {}
+    valid_acces, test_acces, artifacts = [], [], {}
     for tri in tqdm(range(cfg.n_tri)):
-        test_acc, alpha, correct = train_and_test(cfg, data, device)
+        valid_acc, test_acc, alpha, correct = train_and_test(cfg, data, device)
+        valid_acces.append(valid_acc.to('cpu').item())
         test_acces.append(test_acc.to('cpu').item())
         artifacts['alpha_{}.npy'.format(tri)] = alpha
         artifacts['correct_{}.npy'.format(tri)] = correct
 
-    return test_acces, artifacts
+    return valid_acces, test_acces, artifacts

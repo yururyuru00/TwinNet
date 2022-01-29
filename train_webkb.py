@@ -11,7 +11,7 @@ from models.model_loader import load_net
 def accuracy(output, labels):
     preds = output.max(1)[1].type_as(labels)
     correct = preds.eq(labels).double()
-    return correct.sum() / len(labels)
+    return correct.sum() / len(labels), correct
 
 
 def train(tri, data, model, optimizer):
@@ -29,8 +29,9 @@ def train(tri, data, model, optimizer):
     h, alpha = model(data.x, data.edge_index)
     prob_labels_val = F.log_softmax(h, dim=1)
     loss_val = F.nll_loss(prob_labels_val[data.val_mask[:,tri]], data.y[data.val_mask[:,tri]])
+    acc_val, _ = accuracy(prob_labels_val[data.val_mask[:,tri]], data.y[data.val_mask[:,tri]])
 
-    return loss_val.item()
+    return loss_val.item(), acc_val
 
 
 def test(tri, data, model):
@@ -51,7 +52,7 @@ def train_and_test(tri, cfg, data, device):
     best_loss = 100.
     bad_counter = 0
     for epoch in range(1, cfg.epochs):
-        loss_val = train(tri, data, model, optimizer)
+        loss_val, acc_val = train(tri, data, model, optimizer)
 
         if loss_val < best_loss:
             best_loss = loss_val
@@ -61,8 +62,8 @@ def train_and_test(tri, cfg, data, device):
         if bad_counter == cfg.patience:
             break
 
-    test_acc = test(tri, data, model)
-    return test_acc
+    acc_test = test(tri, data, model)
+    return acc_val, acc_test
 
 
 def run(cfg, root, device):
@@ -71,9 +72,10 @@ def run(cfg, root, device):
                     transform = cfg.transform)
     data = dataset.data.to(device)
 
-    test_acces = []
+    valid_acces, test_acces = [], []
     for tri in tqdm(range(cfg.n_tri)):
-        test_acc = train_and_test(tri, cfg, data, device)
+        valid_acc, test_acc = train_and_test(tri, cfg, data, device)
+        valid_acces.append(valid_acc.to('cpu').item())
         test_acces.append(test_acc.to('cpu').item())
 
-    return test_acces, None
+    return valid_acces, test_acces, None

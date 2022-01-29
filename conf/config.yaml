@@ -1,4 +1,4 @@
-key: GAT_PubMed
+key: SAGE_Reddit
 
 
 # -------hydra & mlflow & optuna-------
@@ -9,15 +9,15 @@ mlflow:
   runname: test
 
 defaults:
-  - override hydra/sweeper: basic # [basic, optuna]
+  - override hydra/sweeper: optuna # [basic, optuna]
 
-# hydra:
-#   sweeper:
-#     sampler:
-#       _target_: optuna.samplers.TPESampler
-#     direction: maximize
-#     n_jobs: 1
-#     n_trials: 1000
+hydra:
+  sweeper:
+    sampler:
+      _target_: optuna.samplers.TPESampler
+    direction: maximize
+    n_jobs: 1
+    n_trials: 1000
 
 
 # -------datasets (planetoid)-------
@@ -30,21 +30,21 @@ Planetoid: &Planetoid
 Cora: &Cora
   <<: *Planetoid
   dataset: Cora
-  transform: None
+  x_normalize: False
   n_feat: 1433
   n_class: 7
 
 CiteSeer: &CiteSeer
   <<: *Planetoid
   dataset: CiteSeer
-  transform: T.NormalizeFeatures()
+  x_normalize: True
   n_feat: 3703
   n_class: 6
 
 PubMed: &PubMed
   <<: *Planetoid
   dataset: PubMed
-  transform: None
+  x_normalize: False
   n_feat: 500
   n_class: 3
 
@@ -54,7 +54,7 @@ PubMed: &PubMed
 WebKB: &WebKB
   task: transductive
   epochs: 5000 # override >> GNN
-  transform: None
+  x_normalize: False
   n_feat: 1703
   n_tri: 10 # following original paper
   n_class: 5
@@ -200,12 +200,12 @@ GCN_Arxiv: &GCN_Arxiv
 
 SAGE_Reddit: &SAGE_Reddit
   <<: [*Reddit, *SAGE]
-  norm: BatchNorm1d
-  n_layer: 3
-  n_hid: 256
-  dropout: 0.6
+  norm: None
+  n_layer: 2
+  n_hid: 128
+  dropout: 0
   learning_rate: 0.001
-  weight_decay: 0.0001  
+  weight_decay: 0
 
 SAGE_PPI: &SAGE_PPI
   <<: [*PPI, *SAGE]

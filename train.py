@@ -41,28 +41,31 @@ def main(cfg: DictConfig):
     with mlflow.start_run():
         log_params_from_omegaconf_dict(cfg)
         if cfg.dataset in ['Cora', 'CiteSeer', 'PubMed']:
-            test_acces, artifacts = train_planetoid(cfg, root, device)
+            valid_acces, test_acces, artifacts = train_planetoid(cfg, root, device)
         elif cfg.dataset in ['Cornell', 'Texas', 'Wisconsin']:
-            test_acces, artifacts = train_webkb(cfg, root, device)
+            valid_acces, test_acces, artifacts = train_webkb(cfg, root, device)
         elif cfg.dataset == 'Arxiv':
-            test_acces, artifacts = train_arxiv(cfg, root, device)
+            valid_acces, test_acces, artifacts = train_arxiv(cfg, root, device)
         elif cfg.dataset == 'PPI':
-            test_acces, artifacts = train_ppi(cfg, root, device)
+            valid_acces, test_acces, artifacts = train_ppi(cfg, root, device)
         elif cfg.dataset == 'PPIinduct':
-            test_acces, artifacts = train_ppi_induct(cfg, root, device)
+            valid_acces, test_acces, artifacts = train_ppi_induct(cfg, root, device)
         elif cfg.dataset == 'Reddit':
-            test_acces, artifacts = train_reddit(cfg, root, device)
+            valid_acces, test_acces, artifacts = train_reddit(cfg, root, device)
         
-        for i, acc in enumerate(test_acces):
-            mlflow.log_metric('acc', value=acc, step=i)
+        for i, acc_test in enumerate(test_acces):
+            mlflow.log_metric('acc_test', value=acc_test, step=i)
+        valid_acc_mean = sum(valid_acces)/len(valid_acces)
         test_acc_mean = sum(test_acces)/len(test_acces)
         mlflow.log_metric('acc_mean', value=test_acc_mean)
         mlflow.log_metric('acc_max', value=max(test_acces))
         mlflow.log_metric('acc_min', value=min(test_acces))
+        mlflow.log_metric('valid', value=valid_acc_mean)
         log_artifacts(artifacts)
 
-    print('test mean acc: {:.3f}'.format(test_acc_mean))
-    return test_acc_mean
+    print('valid mean acc: {:.3f}'.format(valid_acc_mean))
+    print('test  mean acc: {:.3f}'.format(test_acc_mean))
+    return valid_acc_mean # we tune hyper-parameters based on validation data, not test data
 
 
 if __name__ == "__main__":

@@ -25,20 +25,27 @@ def train(loader, model, optimizer, device):
 def test(loader, model, evaluator, device):
     model.eval()
 
-    ys, preds, alphas = [], [], []
+    ys_valid, preds_valid = [], []
+    ys_test, preds_test = [], []
     for data in loader: # only one graph (=g1+g2)
         data = data.to(device)
         out, alpha = model(data.x, data.edge_index)
-        mask = data['test_mask']
-        ys.append(data.y[mask].cpu())
-        preds.append(out[mask].cpu())
+        ys_valid.append(data.y[data['valid_mask']].cpu())
+        preds_valid.append(out[data['valid_mask']].cpu())
+        ys_test.append(data.y[data['test_mask']].cpu())
+        preds_test.append(out[data['test_mask']].cpu())
 
-    test_rocauc = evaluator.eval({
-        'y_true': torch.cat(ys, dim=0),
-        'y_pred': torch.cat(preds, dim=0),
+    valid_rocauc = evaluator.eval({
+        'y_true': torch.cat(ys_valid, dim=0),
+        'y_pred': torch.cat(preds_valid, dim=0),
     })['rocauc']
 
-    return test_rocauc.item()
+    test_rocauc = evaluator.eval({
+        'y_true': torch.cat(ys_test, dim=0),
+        'y_pred': torch.cat(preds_test, dim=0),
+    })['rocauc']
+
+    return valid_rocauc.item(), test_rocauc.item()
 
 
 def train_and_test(tri, cfg, data, device):
@@ -58,9 +65,8 @@ def train_and_test(tri, cfg, data, device):
 
     for epoch in tqdm(range(1, cfg['epochs'])):
         train(train_loader, model, optimizer, device)
-    test_acc = test(test_loader, model, evaluator, device)
 
-    return test_acc
+    return test(test_loader, model, evaluator, device)
 
 
 def run(cfg, root, device):
@@ -81,9 +87,10 @@ def run(cfg, root, device):
         mask[splitted_idx[split]] = True
         data[f'{split}_mask'] = mask
 
-    test_acces = []
+    valid_acces, test_acces = [], []
     for tri in range(cfg['n_tri']):
-        test_acc = train_and_test(tri, cfg, data, device)
+        valid_acc, test_acc = train_and_test(tri, cfg, data, device)
+        valid_acces.append(valid_acc)
         test_acces.append(test_acc)
 
-    return test_acces, None
+    return valid_acces, test_acces, None
