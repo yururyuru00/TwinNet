@@ -1,4 +1,3 @@
-from cv2 import transform
 from tqdm import tqdm
 
 import torch
