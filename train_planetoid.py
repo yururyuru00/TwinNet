@@ -39,9 +39,10 @@ def test(data, model):
     model.eval()
     h, alpha = model(data.x, data.edge_index)
     prob_labels_test = F.log_softmax(h, dim=1)
-    acc, correct = accuracy(prob_labels_test[data.test_mask], data.y[data.test_mask])
+    acc, _ = accuracy(prob_labels_test[data.test_mask], data.y[data.test_mask])
+    _, whole_node_correct = accuracy(prob_labels_test, data.y)
 
-    return acc, alpha, correct
+    return acc, alpha, whole_node_correct
 
 
 def train_and_test(cfg, data, device):
@@ -78,6 +79,6 @@ def run(cfg, root, device):
         test_acc, alpha, correct = train_and_test(cfg, data, device)
         test_acces.append(test_acc.to('cpu').item())
         artifacts['alpha_{}.npy'.format(tri)] = alpha
-        artifacts['correct_test_{}.npy'.format(tri)] = correct
+        artifacts['correct_{}.npy'.format(tri)] = correct
 
     return test_acces, artifacts

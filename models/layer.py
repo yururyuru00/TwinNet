@@ -130,9 +130,9 @@ class Summarize(nn.Module):
             alpha_ad = self.att(query_key).squeeze(-1)
             alpha = alpha_ad * torch.sigmoid((query * key).sum(dim=-1))
 
-        alpha1 = torch.softmax(alpha/self.att_temparature, dim=-1)
-        alpha2 = torch.softmax(alpha/1., dim=-1)
-        return (h * alpha1.unsqueeze(-1)).sum(dim=1), alpha2
+        alpha = torch.softmax(alpha/self.att_temparature, dim=-1)
+        # alpha2 = torch.softmax(alpha/1., dim=-1)
+        return (h * alpha.unsqueeze(-1)).sum(dim=1), alpha
 
 
 

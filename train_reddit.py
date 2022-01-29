@@ -29,7 +29,7 @@ def test(data, test_loader, model, device):
     y_true = data.y.unsqueeze(-1)
     y_pred = h.argmax(dim=-1, keepdim=True)
     test_acc = int(y_pred[data.test_mask].eq(y_true[data.test_mask]).sum()) / int(data.test_mask.sum())
-    
+
     return test_acc
 
 
@@ -46,8 +46,8 @@ def train_and_test(tri, cfg, data, device):
                                    num_workers = 0)
     test_loader = NeighborSampler(data.edge_index, 
                                   node_idx    = None,
-                                  sizes       = [-1], 
-                                  batch_size  = 1024, 
+                                  sizes       = [-1],
+                                  batch_size  = 1024,
                                   shuffle     = False,
                                   num_workers = 0)
 

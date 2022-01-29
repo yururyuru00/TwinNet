@@ -8,6 +8,13 @@ from ogb.nodeproppred import PygNodePropPredDataset, Evaluator
 from models.model_loader import load_net
 
 
+def acc(y_true, y_pred):
+    for i in range(y_true.shape[1]):
+        is_labeled = y_true[:,i] == y_true[:,i]
+        correct = y_true[is_labeled,i] == y_pred[is_labeled,i]
+    return correct.to(torch.int8)
+
+
 def train(data, model, optimizer):
     model.train()
 
@@ -23,17 +30,15 @@ def train(data, model, optimizer):
 @torch.no_grad()
 def test(data, model, evaluator):
     model.eval()
-
     out, alpha = model(data.x, data.adj_t)
     y_pred = out.argmax(dim=-1, keepdim=True)
     
     mask = data['test_mask']
-    test_acc = evaluator.eval({
-        'y_true': data.y[mask],
-        'y_pred': y_pred[mask],
-    })['acc']
+    test_acc = evaluator.eval({'y_true': data.y[mask],
+                               'y_pred': y_pred[mask],})['acc']
+    whole_correct = acc(data.y, y_pred)
     
-    return test_acc
+    return test_acc, alpha, whole_correct
 
 
 def train_and_test(cfg, data, device):
@@ -64,9 +69,11 @@ def run(cfg, root, device):
         mask[splitted_idx[split]] = True
         data[f'{split}_mask'] = mask
 
-    test_acces = []
+    test_acces, artifacts = [], {}
     for tri in range(cfg['n_tri']):
-        test_acc = train_and_test(cfg, data, device)
+        test_acc, alpha, correct = train_and_test(cfg, data, device)
         test_acces.append(test_acc)
+        artifacts['alpha_{}.npy'.format(tri)] = alpha
+        artifacts['correct_{}.npy'.format(tri)] = correct
 
-    return test_acces, None
+    return test_acces, artifacts
