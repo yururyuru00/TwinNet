@@ -1,8 +1,8 @@
 def load_net(cfg):
     if cfg.dataset == 'Reddit':
-        from .for_reddit.model_ours import TwinSAGE
-        from .for_reddit.model_jknet import JKSAGE
-        from .for_reddit.model_gnn import SAGE
+        from .for_large_scale.model_ours import TwinSAGE
+        from .for_large_scale.model_jknet import JKSAGE
+        from .for_large_scale.model_gnn import SAGE
 
         # our algorithm
         if cfg.global_skip_connection == 'twin':
@@ -18,9 +18,9 @@ def load_net(cfg):
 
 
     else: # if other datasets
-        from .for_others.model_ours import TwinGCN, TwinGAT, TwinSAGE
-        from .for_others.model_jknet import JKGCN, JKGAT, JKSAGE
-        from .for_others.model_gnn import GCN, GAT, SAGE
+        from .for_small_scale.model_ours import TwinGCN, TwinGAT, TwinSAGE
+        from .for_small_scale.model_jknet import JKGCN, JKGAT, JKSAGE
+        from .for_small_scale.model_gnn import GCN, GAT, SAGE
 
         # our algorithm (attention skip-connection)
         if cfg.global_skip_connection == 'twin':

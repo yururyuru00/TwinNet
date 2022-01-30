@@ -6,6 +6,7 @@ from ..layer import conv_for_gpumemory, Summarize, GNNConv
 
 # TwinSAGE do not use skip-connection because SAGE already use skip-connection (h = AxW + xW_)
 class TwinSAGE(nn.Module):
+    
     def __init__(self, cfg):
         super(TwinSAGE, self).__init__()
         self.dropout = cfg.dropout
@@ -22,21 +23,33 @@ class TwinSAGE(nn.Module):
                                    temparature = cfg.temparature)
         self.out_lin = nn.Linear(cfg.n_hid, cfg.n_class)
 
+
     def forward(self, x, adjs, batch_size):
         hs, hs_ = [], []
         x_ = x.clone().detach()[:batch_size]
-        for l, (edge_index, _, size) in enumerate(adjs): # size is [B_l's size, B_(l+1)'s size]
-            x_target = x[:size[1]]  # Target nodes are always placed first.
-            x, x_    = self.convs[l]([(x, x_target), x_], edge_index) # x's shape is (B_l's size, hid) -> (B_(l+1)'s size, hid)
-            x, x_    = self.act(x), self.act(x_)
-            x, x_    = F.dropout(x,  self.dropout, training=self.training), \
-                       F.dropout(x_, self.dropout, training=self.training)
-            hs.append(x)
-            hs_.append(x_)
-        hs  = [h[:batch_size] for h in hs]
+        if isinstance(adjs, list):
+            for l, (edge_index, _, size) in enumerate(adjs): # size is [B_l's size, B_(l+1)'s size]
+                x_target = x[:size[1]]  # Target nodes are always placed first.
+                x, x_    = self.convs[l]([(x, x_target), x_], edge_index) # x's shape is (B_l's size, hid) -> (B_(l+1)'s size, hid)
+                x, x_    = self.act(x), self.act(x_)
+                x, x_    = F.dropout(x,  self.dropout, training=self.training), \
+                           F.dropout(x_, self.dropout, training=self.training)
+                hs.append(x)
+                hs_.append(x_)
+            hs  = [h[:batch_size] for h in hs]
+        else:
+            edge_index = adjs
+            for conv in self.convs:
+                x, x_ = conv([x, x_], edge_index)
+                x, x_ = self.act(x), self.act(x_)
+                x, x_ = F.dropout(x,  self.dropout, training=self.training), \
+                        F.dropout(x_, self.dropout, training=self.training)
+                hs.append(x)
+                hs_.append(x_)
 
         h, alpha = self.summarize(hs, hs_) # hs = [h^1,h^2,...,h^L], each h^l is (n, d)
         return self.out_lin(h), alpha
+
 
     def inference(self, x, loader, device):
         # we do not use dropout because inferense is test

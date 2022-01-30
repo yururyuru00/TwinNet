@@ -71,11 +71,9 @@ def train_and_test(cfg, data, device):
 
 def run(cfg, root, device):
     if cfg.x_normalize:
-        print('yess')
         transforms = T.Compose([T.RandomNodeSplit(num_val=500, num_test=500),
                                 T.NormalizeFeatures()])
     else:
-        print('nooo')
         transforms = T.Compose([T.RandomNodeSplit(num_val=500, num_test=500)])
     dataset = Planetoid(root          = root + '/data/' + cfg.dataset,
                         name          = cfg.dataset,
