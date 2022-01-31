@@ -11,7 +11,7 @@ from train_arxiv import run as train_arxiv
 from train_ppi import run as train_ppi
 from train_ppi_induct import run as train_ppi_induct
 from train_reddit import run as train_reddit
-
+from train_products import run as train_products
 
 def log_params_from_omegaconf_dict(params):
     for param_name, value in params.items():
@@ -52,6 +52,8 @@ def main(cfg: DictConfig):
             valid_acces, test_acces, artifacts = train_ppi_induct(cfg, root, device)
         elif cfg.dataset == 'Reddit':
             valid_acces, test_acces, artifacts = train_reddit(cfg, root, device)
+        elif cfg.dataset == 'Products':
+            valid_acces, test_acces, artifacts = train_products(cfg, root, device)
         
         for i, acc_test in enumerate(test_acces):
             mlflow.log_metric('acc_test', value=acc_test, step=i)

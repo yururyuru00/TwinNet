@@ -101,7 +101,7 @@ class Summarize(nn.Module):
         self.att.reset_parameters()
         self.weight = nn.Parameter(torch.ones(channels), requires_grad=True)
 
-    def forward(self, hs, hs_, ):
+    def forward(self, hs, hs_):
         h = torch.stack(hs, dim=1)  # h is (n, L, d).
         h_ = torch.stack(hs_, dim=1)  # h_ is also (n, L, d).
 
@@ -131,7 +131,6 @@ class Summarize(nn.Module):
             alpha = alpha_ad * torch.sigmoid((query * key).sum(dim=-1))
 
         alpha = torch.softmax(alpha/self.att_temparature, dim=-1)
-        # alpha2 = torch.softmax(alpha/1., dim=-1)
         return (h * alpha.unsqueeze(-1)).sum(dim=1), alpha
 
 

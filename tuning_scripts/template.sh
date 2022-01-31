@@ -3,6 +3,7 @@ IFS=$'\n'
 ary=("
 
      python3 train.py -m mlflow.runname=TwinGCN_Cornell 'key=TwinGCN_Cornell' \
+     'hydra.sweeper.n_trials=100' \
      'TwinGCN_Cornell.norm=choice(None,LayerNorm,BatchNorm1d)' \
      'TwinGCN_Cornell.n_layer=range(2,9)' \
      'TwinGCN_Cornell.dropout=choice(0.,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9)' \
@@ -17,6 +18,7 @@ ary=("
      
      
      python3 train.py -m mlflow.runname=TwinGAT_Cornell 'key=TwinGAT_Cornell' \
+     'hydra.sweeper.n_trials=100' \
      'TwinGAT_Cornell.norm=choice(None,LayerNorm,BatchNorm1d)' \
      'TwinGAT_Cornell.n_layer=range(2,9)' \
      'TwinGAT_Cornell.dropout=choice(0.,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9)' \

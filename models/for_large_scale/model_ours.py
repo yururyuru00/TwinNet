@@ -1,3 +1,5 @@
+import numpy as np
+
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -24,7 +26,7 @@ class TwinSAGE(nn.Module):
         self.out_lin = nn.Linear(cfg.n_hid, cfg.n_class)
 
 
-    def forward(self, x, adjs, batch_size):
+    def forward(self, x, adjs, batch_size=None):
         hs, hs_ = [], []
         x_ = x.clone().detach()[:batch_size]
         if isinstance(adjs, list):
@@ -58,8 +60,7 @@ class TwinSAGE(nn.Module):
         for conv in self.convs:
             x, x_ = conv_for_gpumemory([x, x_], loader, conv, device)
             x, x_ = self.act(x), self.act(x_)
-            hs.append(x)
-            hs_.append(x_)
+            np.load('')
 
         h, alpha = self.summarize(hs, hs_)
         return self.out_lin(h), alpha

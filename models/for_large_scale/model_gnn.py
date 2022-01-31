@@ -12,13 +12,13 @@ class SAGE(nn.Module):
         self.dropout = cfg.dropout
 
         self.convs = nn.ModuleList()
-        self.convs(GNNConv('sage_conv', cfg.n_feat, cfg.n_hid, cfg.norm))
+        self.convs.append(GNNConv('sage_conv', cfg.n_feat, cfg.n_hid, cfg.norm))
         for l in range(1, cfg.n_layer-1):
             self.convs.append(GNNConv('sage_conv', cfg.n_hid, cfg.n_hid, cfg.norm))
         self.out_conv = GNNConv('sage_conv', cfg.n_hid, cfg.n_class, norm='None')
 
 
-    def forward(self, x, adjs, _):
+    def forward(self, x, adjs, batch_size=None):
         if isinstance(adjs, list):
             adjs, out_adj = adjs[:-1], adjs[-1]
 
@@ -33,22 +33,19 @@ class SAGE(nn.Module):
         else:
             edge_index = adjs
 
-            for conv in self.convs[:-1]:
+            for conv in self.convs:
                 x = conv(x, edge_index)
                 x = F.relu(x)
                 x = F.dropout(x, p=self.dropout, training=self.training)
-            x = self.convs[-1](x, edge_index)
+            x = self.out_conv(x, edge_index)
 
         return x, None
 
 
     def inference(self, x, loader, device):
         # we do not use dropout because inferense is test
-        x = conv_for_gpumemory(x, loader, self.in_conv, device)
-        x = F.relu(x)
-
-        for mid_conv in self.mid_convs:
-            x = conv_for_gpumemory(x, loader, mid_conv, device)
+        for conv in self.convs:
+            x = conv_for_gpumemory(x, loader, conv, device)
             x = F.relu(x)
 
         x = conv_for_gpumemory(x, loader, self.out_conv, device)

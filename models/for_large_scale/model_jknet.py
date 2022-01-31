@@ -25,7 +25,7 @@ class JKSAGE(nn.Module):
             self.out_lin = nn.Linear(cfg.n_hid, cfg.n_class)
 
 
-    def forward(self, x, adjs, batch_size):
+    def forward(self, x, adjs, batch_size=None):
         hs = []
         if isinstance(adjs, list):
             for l, (edge_index, _, size) in enumerate(adjs): # size is [B_l's size, B_(l+1)'s size]

@@ -1,5 +1,5 @@
 def load_net(cfg):
-    if cfg.dataset == 'Reddit':
+    if cfg.dataset in ['Reddit', 'Products']:
         from .for_large_scale.model_ours import TwinSAGE
         from .for_large_scale.model_jknet import JKSAGE
         from .for_large_scale.model_gnn import SAGE
@@ -17,7 +17,7 @@ def load_net(cfg):
             return SAGE(cfg)
 
 
-    else: # if other datasets
+    else: # if other small-scale datasets
         from .for_small_scale.model_ours import TwinGCN, TwinGAT, TwinSAGE
         from .for_small_scale.model_jknet import JKGCN, JKGAT, JKSAGE
         from .for_small_scale.model_gnn import GCN, GAT, SAGE
@@ -39,7 +39,7 @@ def load_net(cfg):
                 return JKSAGE(cfg)
             elif cfg.base_gnn == 'GAT':
                 return JKGAT(cfg)
-    
+
         # existing algorithms
         else: # if global_skip_connection == 'vanilla'
             if cfg.base_gnn == 'GCN':

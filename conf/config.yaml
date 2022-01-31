@@ -1,4 +1,4 @@
-key: SAGE_Reddit
+key: TwinGAT_PubMed
 
 
 # -------hydra & mlflow & optuna-------
@@ -9,15 +9,15 @@ mlflow:
   runname: test
 
 defaults:
-  - override hydra/sweeper: optuna # [basic, optuna]
+  - override hydra/sweeper: basic # [basic, optuna]
 
-hydra:
-  sweeper:
-    sampler:
-      _target_: optuna.samplers.TPESampler
-    direction: maximize
-    n_jobs: 1
-    n_trials: 100
+# hydra:
+#   sweeper:
+#     sampler:
+#       _target_: optuna.samplers.TPESampler
+#     direction: maximize
+#     n_jobs: 1
+#     n_trials: 100
 
 # -------datasets (planetoid)-------
 
@@ -89,6 +89,14 @@ Arxiv: &Arxiv
   n_tri: 5
   epochs: 500 # override >> GNN
 
+Products: &Products
+  dataset: Products
+  task: transductive
+  n_feat: 100
+  n_class: 47
+  n_tri: 1
+  epochs: 21 # override >> GNN
+
 Reddit: &Reddit
   dataset: Reddit
   task: transductive
@@ -152,14 +160,19 @@ GCN_Cora: &GCN_Cora
   <<: [*Cora, *GCN]
   norm: None
   n_layer: 2
-  n_hid: 32
+  n_hid: 16
   dropout: 0.2
   learning_rate: 0.01
   weight_decay: 0.01
 
 GCN_CiteSeer: &GCN_CiteSeer
   <<: [*CiteSeer, *GCN]
-  # not yet tuning
+  norm: None
+  n_layer: 2
+  n_hid: 16
+  dropout: 0.2
+  learning_rate: 0.005
+  weight_decay: 5E-5
 
 GAT_PubMed: &GAT_PubMed
   <<: [*PubMed, *GAT]
@@ -212,6 +225,15 @@ SAGE_PPI: &SAGE_PPI
   learning_rate: 0.005
   weight_decay: 0
 
+SAGE_Products: &SAGE_Products
+  <<: [*Products, *SAGE]
+  norm: None
+  n_layer: 3
+  n_hid: 256
+  dropout: 0.5
+  learning_rate: 0.01
+  weight_decay: 0
+
 
 
 # Jumping Knowledge Networks (JKNet)
@@ -241,7 +263,8 @@ JKSAGE_Reddit: &JKSAGE_Reddit
 JKSAGE_PPI: &JKSAGE_PPI
   <<: [*JK, *SAGE_PPI]
 
-
+JKSAGE_Products: &JKSAGE_Products
+  <<: [*JK, *SAGE_Products]
 
 # -------model instance (our study)-------
 
@@ -256,15 +279,19 @@ Twin: &Twin
 
 TwinGCN_Cora: &TwinGCN_Cora
   <<: [*Twin, *GCN_Cora]
-  # not yet tuning
+  n_layer: 6
+  temparature: 0.5
 
 TwinGCN_CiteSeer: &TwinGCN_CiteSeer
   <<: [*Twin, *GCN_CiteSeer]
-  # not yet tuning
+  n_layer: 2
+  scope: global
+  kernel: dp
+  temparature: -1
 
 TwinGAT_PubMed: &TwinGAT_PubMed
   <<: [*Twin, *GAT_PubMed]
-  n_layer: 4
+  n_layer: 5
 
 TwinGAT_PPIinduct: &TwinGAT_PPIinduct
   <<: [*Twin, *GAT_PPIinduct]
@@ -286,3 +313,6 @@ TwinSAGE_PPI: &TwinSAGE_PPI
   n_layer: 7
   kernel: wdp # maybe sdp
   temparature: 0.5
+
+TwinSAGE_Products: &TwinSAGE_Products
+  <<: [*Twin, *SAGE_Products]
