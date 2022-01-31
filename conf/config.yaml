@@ -1,4 +1,4 @@
-key: TwinGAT_PubMed
+key: TwinSAGE_Reddit
 
 
 # -------hydra & mlflow & optuna-------
@@ -286,8 +286,7 @@ TwinGCN_CiteSeer: &TwinGCN_CiteSeer
   <<: [*Twin, *GCN_CiteSeer]
   n_layer: 2
   scope: global
-  kernel: dp
-  temparature: -1
+  temparature: -0.1
 
 TwinGAT_PubMed: &TwinGAT_PubMed
   <<: [*Twin, *GAT_PubMed]
@@ -306,13 +305,15 @@ TwinGCN_Arxiv: &TwinGCN_Arxiv
 
 TwinSAGE_Reddit: &TwinSAGE_Reddit
   <<: [*Twin, *SAGE_Reddit]
+  n_layer: 3
+  temparature: 0.5
   # not yet tuning
 
 TwinSAGE_PPI: &TwinSAGE_PPI
   <<: [*Twin, *SAGE_PPI]
   n_layer: 7
-  kernel: wdp # maybe sdp
   temparature: 0.5
 
 TwinSAGE_Products: &TwinSAGE_Products
   <<: [*Twin, *SAGE_Products]
+  # not yet tuning

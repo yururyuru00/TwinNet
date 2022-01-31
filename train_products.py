@@ -8,8 +8,6 @@ from ogb.nodeproppred import PygNodePropPredDataset, Evaluator
 from models.model_loader import load_net
 
 
-
-
 def train(loader, model, optimizer, device):
     model.train()
 

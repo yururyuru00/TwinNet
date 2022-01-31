@@ -1,5 +1,7 @@
+from hydra import utils
 import numpy as np
 
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -53,14 +55,35 @@ class TwinSAGE(nn.Module):
         return self.out_lin(h), alpha
 
 
-    def inference(self, x, loader, device):
+    def inference(self, x, loader, device, num_splits=10):
         # we do not use dropout because inferense is test
-        hs, hs_ = [], []
+        root = utils.get_original_cwd()
         x_ = x.clone().detach()
-        for conv in self.convs:
+        for i, conv in enumerate(self.convs):
             x, x_ = conv_for_gpumemory([x, x_], loader, conv, device)
             x, x_ = self.act(x), self.act(x_)
-            np.load('')
+            np.save(root+'/data/tensor_buff/h_L{}.npy'.format(i), x.to('cpu').detach().numpy().copy())
+            np.save(root+'/data/tensor_buff/h_twin_L{}.npy'.format(i), x_.to('cpu').detach().numpy().copy())
 
-        h, alpha = self.summarize(hs, hs_)
+        num_nodes = x.size()[0]
+        partition_size = int(num_nodes / num_splits)
+        h_all, alpha_all = [], []
+        for i in range(num_splits):
+            start_idx, end_idx = partition_size*i, partition_size*(i+1)
+            if i == num_splits-1:
+                end_idx = num_nodes
+            hs, hs_ = [], []
+            for l in range(len(self.convs)):
+                h  = np.load(root+'/data/tensor_buff/h_L{}.npy'.format(l))      # (n, d)
+                h_ = np.load(root+'/data/tensor_buff/h_twin_L{}.npy'.format(l)) # (n, d)
+                h  = torch.from_numpy(h[start_idx:end_idx].astype(np.float32)).clone().to(device)
+                h_ = torch.from_numpy(h_[start_idx:end_idx].astype(np.float32)).clone().to(device)
+                hs.append(h)   # (partition_size, d)
+                hs_.append(h_) # (partition_size, d)
+            h, alpha = self.summarize(hs, hs_)
+            h_all.append(h)
+            alpha_all.append(alpha)
+        h = torch.cat(h_all, axis=0)
+        alpha = torch.cat(alpha_all, axis=0)
+
         return self.out_lin(h), alpha
