@@ -8,7 +8,7 @@ class TwinGCN(nn.Module):
     def __init__(self, cfg):
         super(TwinGCN, self).__init__()
         self.dropout = cfg.dropout
-        self.act = eval(f'nn.' + cfg.activation + '()') # ReLU or Identity
+        self.act = eval(f'nn.' + cfg.activation + '()')
 
         self.convs = nn.ModuleList()
         self.skips = nn.ModuleList()
@@ -90,7 +90,7 @@ class TwinGAT(nn.Module):
                           self_loop   = cfg.self_loop,
                           n_heads     = [1, cfg.n_head],
                           iscat       = [False, True],
-                          dropout_att = cfg.dropout_att)
+                          dropout_att = cfg.dropout)
         self.convs.append(in_conv)
         self.skips.append(SkipConnection(cfg.skip_connection, cfg.n_feat, cfg.n_hid*cfg.n_head))
 
@@ -103,7 +103,7 @@ class TwinGAT(nn.Module):
                            self_loop   = cfg.self_loop,
                            n_heads     = [cfg.n_head, cfg.n_head],
                            iscat       = [True, True],
-                           dropout_att = cfg.dropout_att)
+                           dropout_att = cfg.dropout)
             self.convs.append(conv)
             self.skips.append(SkipConnection(cfg.skip_connection, in_channels*cfg.n_head, cfg.n_hid*cfg.n_head))
 

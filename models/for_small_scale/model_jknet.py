@@ -8,6 +8,7 @@ class JKGCN(nn.Module):
     def __init__(self, cfg):
         super(JKGCN, self).__init__()
         self.dropout = cfg.dropout
+        self.act = eval(f'nn.' + cfg.activation + '()')
 
         self.convs = nn.ModuleList()
         self.skips = nn.ModuleList()
@@ -35,7 +36,7 @@ class JKGCN(nn.Module):
         for conv, skip in zip(self.convs, self.skips):
             h = conv(x, edge_index) # twin-Conv
             x = skip((h, x)) # twin-Skip
-            x = F.relu(x)
+            x = self.act(x)
             x = F.dropout(x,  self.dropout, training=self.training)
             hs.append(x)
 
@@ -48,6 +49,7 @@ class JKSAGE(nn.Module):
     def __init__(self, cfg):
         super(JKSAGE, self).__init__()
         self.dropout = cfg.dropout
+        self.act = eval(f'nn.' + cfg.activation + '()')
 
         self.convs = nn.ModuleList()
         self.convs.append(GNNConv('sage_conv', cfg.n_feat, cfg.n_hid, cfg.norm))
@@ -66,7 +68,7 @@ class JKSAGE(nn.Module):
         hs = []
         for l, conv in enumerate(self.convs):
             x = conv(x, edge_index) # twin-Conv
-            x = F.relu(x)
+            x = self.act(x)
             x = F.dropout(x,  self.dropout, training=self.training)
             hs.append(x)
 
@@ -84,7 +86,7 @@ class JKGAT(nn.Module):
         in_conv = GNNConv('gat_conv', cfg.n_feat, cfg.n_hid, cfg.norm,
                           n_heads     = [1, cfg.n_head],
                           iscat       = [False, True],
-                          dropout_att = cfg.dropout_att)
+                          dropout_att = cfg.dropout)
         self.convs.append(in_conv)
         self.skips.append(SkipConnection(cfg.skip_connection, cfg.n_feat, cfg.n_hid*cfg.n_head))
 
@@ -96,7 +98,7 @@ class JKGAT(nn.Module):
             conv = GNNConv('gat_conv', in_channels, cfg.n_hid, cfg.norm,
                            n_heads     = [cfg.n_head, cfg.n_head],
                            iscat       = [True, True],
-                           dropout_att = cfg.dropout_att)
+                           dropout_att = cfg.dropout)
             self.convs.append(conv)
             self.skips.append(SkipConnection(cfg.skip_connection, in_channels*cfg.n_head, cfg.n_hid*cfg.n_head))
 
@@ -114,7 +116,7 @@ class JKGAT(nn.Module):
             x = F.dropout(x,  self.dropout, training=self.training)
             h = conv(x, edge_index) # twin-Conv
             x = skip((h, x)) # twin-Skip
-            x = F.elu(x)
+            x = self.act(x)
             hs.append(x)
 
         h, alpha = self.jk(hs) # hs = [h^1,h^2,...,h^L], each h^l is (n, d)

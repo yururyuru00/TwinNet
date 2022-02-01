@@ -75,17 +75,22 @@ def run(cfg, root, device):
                                 T.NormalizeFeatures()])
     else:
         transforms = T.Compose([T.RandomNodeSplit(num_val=500, num_test=500)])
-    dataset = Planetoid(root          = root + '/data/' + cfg.dataset,
-                        name          = cfg.dataset,
-                        transform     = transforms)
-    data = dataset[0].to(device)
 
     valid_acces, test_acces, artifacts = [], [], {}
     for tri in tqdm(range(cfg.n_tri)):
+        if cfg.debug_mode:
+            torch.manual_seed(cfg.seed)
+            torch.cuda.manual_seed(cfg.seed)
+        dataset = Planetoid(root      = root + '/data/' + cfg.dataset,
+                            name      = cfg.dataset,
+                            transform = transforms)
+        data = dataset[0].to(device)
+
         valid_acc, test_acc, alpha, correct = train_and_test(cfg, data, device)
         valid_acces.append(valid_acc.to('cpu').item())
         test_acces.append(test_acc.to('cpu').item())
         artifacts['alpha_{}.npy'.format(tri)] = alpha
         artifacts['correct_{}.npy'.format(tri)] = correct
+        artifacts['test_mask_{}.npy'.format(tri)] = data.test_mask
 
     return valid_acces, test_acces, artifacts

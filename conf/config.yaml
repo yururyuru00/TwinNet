@@ -1,4 +1,4 @@
-key: TwinSAGE_Reddit
+key: TwinGCN_Cora
 
 
 # -------hydra & mlflow & optuna-------
@@ -24,6 +24,7 @@ defaults:
 Planetoid: &Planetoid
   task: transductive
   n_tri: 10
+  debug_mode: False
 
 Cora: &Cora
   <<: *Planetoid
@@ -143,7 +144,6 @@ GAT: &GAT
   <<: *GNN
   activation: ELU
   base_gnn: GAT # override >> GNN
-  dropout_att: 0.6
   n_head: 8
   n_head_last: 1
 
@@ -158,32 +158,31 @@ SAGE: &SAGE
 
 GCN_Cora: &GCN_Cora
   <<: [*Cora, *GCN]
-  norm: None
-  n_layer: 2
-  n_hid: 16
-  dropout: 0.2
-  learning_rate: 0.01
-  weight_decay: 0.01
-
-GCN_CiteSeer: &GCN_CiteSeer
-  <<: [*CiteSeer, *GCN]
-  norm: None
-  n_layer: 2
-  n_hid: 16
-  dropout: 0.2
-  learning_rate: 0.005
-  weight_decay: 5E-5
-
-GAT_PubMed: &GAT_PubMed
-  <<: [*PubMed, *GAT]
   norm: LayerNorm
   n_layer: 2
   n_hid: 16
-  n_head_last: 8
-  dropout: 0.2
-  dropout_att: 0.1
+  dropout: 0.4
   learning_rate: 0.001
-  weight_decay: 0.001
+  weight_decay: 0.0005
+
+GCN_CiteSeer: &GCN_CiteSeer
+  <<: [*CiteSeer, *GCN]
+  # norm: LayerNorm
+  # n_layer: 2
+  # n_hid: 16
+  # dropout: 0.4
+  # learning_rate: 0.001
+  # weight_decay: 0.005
+
+GAT_PubMed: &GAT_PubMed
+  <<: [*PubMed, *GAT]
+  # norm: LayerNorm
+  # n_layer: 2
+  # n_hid: 16
+  # n_head_last: 8
+  # dropout: 0.2
+  # learning_rate: 0.001
+  # weight_decay: 0.001
 
 GAT_PPIinduct: &GAT_PPIinduct
   <<: [*PPIinduct, *GAT]
@@ -194,7 +193,6 @@ GAT_PPIinduct: &GAT_PPIinduct
   n_head: 4
   n_head_last: 6
   dropout: 0
-  dropout_att: 0
   learning_rate: 0.001
   weight_decay: 0
 
@@ -284,9 +282,8 @@ TwinGCN_Cora: &TwinGCN_Cora
 
 TwinGCN_CiteSeer: &TwinGCN_CiteSeer
   <<: [*Twin, *GCN_CiteSeer]
-  n_layer: 2
-  scope: global
-  temparature: -0.1
+  n_layer: 8
+  temparature: 0.1
 
 TwinGAT_PubMed: &TwinGAT_PubMed
   <<: [*Twin, *GAT_PubMed]
@@ -294,7 +291,7 @@ TwinGAT_PubMed: &TwinGAT_PubMed
 
 TwinGAT_PPIinduct: &TwinGAT_PPIinduct
   <<: [*Twin, *GAT_PPIinduct]
-  n_layer: 6
+  n_layer: 5
   kernel: mx # maybe sdp
 
 TwinGCN_Arxiv: &TwinGCN_Arxiv

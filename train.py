@@ -15,7 +15,7 @@ from train_products import run as train_products
 
 def log_params_from_omegaconf_dict(params):
     for param_name, value in params.items():
-        print('{}: {}'.format(param_name, value))
+        # print('{}: {}'.format(param_name, value))
         mlflow.log_param(param_name, value)
 
 def log_artifacts(artifacts):

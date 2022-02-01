@@ -9,6 +9,7 @@ class GCN(nn.Module):
     def __init__(self, cfg):
         super(GCN, self).__init__()
         self.dropout = cfg.dropout
+        self.act = eval(f'nn.' + cfg.activation + '()')
 
         self.in_conv = GNNConv('gcn_conv', cfg.n_feat, cfg.n_hid, cfg.norm)
 
@@ -30,13 +31,13 @@ class GCN(nn.Module):
 
     def forward(self, x, edge_index):
         x = self.in_conv(x, edge_index)
-        x = F.relu(x)
+        x = self.act(x)
         x = F.dropout(x, self.dropout, training=self.training)
 
         for mid_conv, skip in zip(self.mid_convs, self.skips):
             h = mid_conv(x, edge_index)
             x = skip((h, x))
-            x = F.relu(x)
+            x = self.act(x)
             x = F.dropout(x, self.dropout, training=self.training)
         
         x = self.out_conv(x, edge_index)
@@ -48,6 +49,7 @@ class SAGE(nn.Module):
     def __init__(self, cfg):
         super(SAGE, self).__init__()
         self.dropout = cfg.dropout
+        self.act = eval(f'nn.' + cfg.activation + '()') # ReLU or Identity
 
         self.in_conv = GNNConv('sage_conv', cfg.n_feat, cfg.n_hid, cfg.norm)
         self.mid_convs = nn.ModuleList()
@@ -57,12 +59,12 @@ class SAGE(nn.Module):
 
     def forward(self, x, edge_index):
         x = self.in_conv(x, edge_index)
-        x = F.relu(x)
+        x = self.act(x)
         x = F.dropout(x, self.dropout, training=self.training)
 
         for mid_conv in self.mid_convs:
             x = mid_conv(x, edge_index)
-            x = F.relu(x)
+            x = self.act(x)
             x = F.dropout(x, self.dropout, training=self.training)
 
         x = self.out_conv(x, edge_index)
@@ -73,11 +75,12 @@ class GAT(nn.Module):
     def __init__(self, cfg):
         super(GAT, self).__init__()
         self.dropout = cfg.dropout
+        self.act = eval(f'nn.' + cfg.activation + '()') # ReLU or Identity
 
         self.in_conv = GNNConv('gat_conv', cfg.n_feat, cfg.n_hid, cfg.norm,
                                n_heads     = [1, cfg.n_head],
                                iscat       = [False, True],
-                               dropout_att = cfg.dropout_att)
+                               dropout_att = cfg.dropout)
         
         self.mid_convs = torch.nn.ModuleList()
         self.skips = nn.ModuleList()
@@ -89,7 +92,7 @@ class GAT(nn.Module):
             mid_conv = GNNConv('gat_conv', in_channels, cfg.n_hid, cfg.norm,
                                n_heads     = [cfg.n_head, cfg.n_head],
                                iscat       = [True, True],
-                               dropout_att = cfg.dropout_att)
+                               dropout_att = cfg.dropout)
             self.mid_convs.append(mid_conv)
             self.skips.append(SkipConnection(cfg.skip_connection, in_channels*cfg.n_head, in_channels*cfg.n_head))
 
@@ -101,18 +104,18 @@ class GAT(nn.Module):
         self.out_conv = GNNConv('gat_conv', in_channels, cfg.n_class, norm='None',
                                 n_heads     = [cfg.n_head, cfg.n_head_last],
                                 iscat       = [True, False],
-                                dropout_att = cfg.dropout_att)
+                                dropout_att = cfg.dropout)
 
     def forward(self, x, edge_index):
         x = F.dropout(x, self.dropout, training=self.training)
         x = self.in_conv(x, edge_index)
-        x = F.elu(x)
+        x = self.act(x)
 
         for mid_conv, skip in zip(self.mid_convs, self.skips):
             x = F.dropout(x, self.dropout, training=self.training)
             h = mid_conv(x, edge_index)
             x = skip((h, x))
-            x = F.elu(x)
+            x = self.act(x)
 
         x = F.dropout(x, self.dropout, training=self.training)
         x = self.out_conv(x, edge_index)

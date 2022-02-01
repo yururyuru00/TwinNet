@@ -1,47 +1,36 @@
 IFS_BACKUP=$IFS
 IFS=$'\n'
 ary=("
-     python3 train.py -m mlflow.runname=TwinGCN_CiteSeer_valid 'key=TwinGCN_CiteSeer' \
-     'hydra.sweeper.n_trials=300' \
+     python3 train.py -m mlflow.runname=TwinGCN_CiteSeer_tuning 'key=TwinGCN_CiteSeer' \
      'TwinGCN_CiteSeer.norm=choice(None,LayerNorm,BatchNorm1d)' \
-     'TwinGCN_CiteSeer.n_layer=2' \
-     'TwinGCN_CiteSeer.dropout=choice(0.,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9)' \
-     'TwinGCN_CiteSeer.learning_rate=choice(0.05,0.01,0.005,0.001)' \
-     'TwinGCN_CiteSeer.weight_decay=choice(0,5E-6,1E-5,5E-5,1E-4,5E-4,1E-3,5E-3,1E-2)' \
-     'TwinGCN_CiteSeer.n_hid=choice(16,32)' \
-     'TwinGCN_CiteSeer.scope=choice(local,global)' \
-     'TwinGCN_CiteSeer.kernel=choice(dp,sdp,wdp,ad,mx)' \
-     'TwinGCN_CiteSeer.temparature=interval(-1.,1.)' \
-     'TwinGCN_CiteSeer.activation=choice(ReLU,Identity)' \
-     'TwinGCN_CiteSeer.self_loop=choice(True,False)'
+     'TwinGCN_CiteSeer.n_layer=choice(2,4,6)' \
+     'TwinGCN_CiteSeer.dropout=choice(0.,0.2,0.4)' \
+     'TwinGCN_CiteSeer.learning_rate=choice(0.01,0.005,0.001)' \
+     'TwinGCN_CiteSeer.weight_decay=choice(0,0.0001,0.0005,0.001)' \
+     'TwinGCN_CiteSeer.scope=global' \
+     'TwinGCN_CiteSeer.kernel=wdp' \
+     'TwinGCN_CiteSeer.temparature=choice(-0.1,-0.5,-1)' \
 
-     python3 train.py -m mlflow.runname=TwinGCN_CiteSeer_valid 'key=TwinGCN_CiteSeer' \
-     'hydra.sweeper.n_trials=300' \
-     'TwinGCN_CiteSeer.norm=choice(None,LayerNorm,BatchNorm1d)' \
-     'TwinGCN_CiteSeer.n_layer=4' \
-     'TwinGCN_CiteSeer.dropout=choice(0.,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9)' \
-     'TwinGCN_CiteSeer.learning_rate=choice(0.05,0.01,0.005,0.001)' \
-     'TwinGCN_CiteSeer.weight_decay=choice(0,5E-6,1E-5,5E-5,1E-4,5E-4,1E-3,5E-3,1E-2)' \
-     'TwinGCN_CiteSeer.n_hid=choice(16,32)' \
-     'TwinGCN_CiteSeer.scope=choice(local,global)' \
-     'TwinGCN_CiteSeer.kernel=choice(dp,sdp,wdp,ad,mx)' \
-     'TwinGCN_CiteSeer.temparature=interval(-1.,1.)' \
-     'TwinGCN_CiteSeer.activation=choice(ReLU,Identity)' \
-     'TwinGCN_CiteSeer.self_loop=choice(True,False)'
 
-     python3 train.py -m mlflow.runname=TwinGCN_CiteSeer_valid 'key=TwinGCN_CiteSeer' \
-     'hydra.sweeper.n_trials=300' \
-     'TwinGCN_CiteSeer.norm=choice(None,LayerNorm,BatchNorm1d)' \
-     'TwinGCN_CiteSeer.n_layer=6' \
-     'TwinGCN_CiteSeer.dropout=choice(0.,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9)' \
-     'TwinGCN_CiteSeer.learning_rate=choice(0.05,0.01,0.005,0.001)' \
-     'TwinGCN_CiteSeer.weight_decay=choice(0,5E-6,1E-5,5E-5,1E-4,5E-4,1E-3,5E-3,1E-2)' \
-     'TwinGCN_CiteSeer.n_hid=choice(16,32)' \
-     'TwinGCN_CiteSeer.scope=choice(local,global)' \
-     'TwinGCN_CiteSeer.kernel=choice(dp,sdp,wdp,ad,mx)' \
-     'TwinGCN_CiteSeer.temparature=interval(-1.,1.)' \
-     'TwinGCN_CiteSeer.activation=choice(ReLU,Identity)' \
-     'TwinGCN_CiteSeer.self_loop=choice(True,False)'
+     python3 train.py -m mlflow.runname=TwinGAT_PubMed_tuning 'key=TwinGAT_PubMed' \
+     'TwinGAT_PubMed.norm=choice(None,LayerNorm,BatchNorm1d)' \
+     'TwinGAT_PubMed.n_layer=choice(2,4,6)' \
+     'TwinGAT_PubMed.dropout=choice(0.,0.2,0.4)' \
+     'TwinGAT_PubMed.learning_rate=choice(0.01,0.005,0.001)' \
+     'TwinGAT_PubMed.weight_decay=choice(0,0.0001,0.0005,0.001)' \
+     'TwinGAT_PubMed.scope=local' \
+     'TwinGAT_PubMed.kernel=wdp' \
+     'TwinGAT_PubMed.temparature=choice(0.1,0.5,1)' \
+
+     python3 train.py -m mlflow.runname=TwinGAT_PubMed_tuning 'key=TwinGAT_PubMed' \
+     'TwinGAT_PubMed.norm=choice(None,LayerNorm,BatchNorm1d)' \
+     'TwinGAT_PubMed.n_layer=choice(2,4,6)' \
+     'TwinGAT_PubMed.dropout=choice(0.,0.2,0.4)' \
+     'TwinGAT_PubMed.learning_rate=choice(0.01,0.005,0.001)' \
+     'TwinGAT_PubMed.weight_decay=choice(0,0.0001,0.0005,0.001)' \
+     'TwinGAT_PubMed.scope=global' \
+     'TwinGAT_PubMed.kernel=wdp' \
+     'TwinGAT_PubMed.temparature=choice(-0.1,-0.5,-1)' \
     ")
 
 
