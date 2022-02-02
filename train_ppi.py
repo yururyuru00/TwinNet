@@ -6,7 +6,7 @@ from torch_geometric.loader import RandomNodeSampler
 from ogb.nodeproppred import PygNodePropPredDataset, Evaluator
 
 from models.model_loader import load_net
-
+from utils import fix_seed
 
 def train(loader, model, optimizer, device):
     model.train()
@@ -50,8 +50,7 @@ def test(loader, model, evaluator, device):
 
 def train_and_test(tri, cfg, data, device):
     # data initialize each tri
-    torch.manual_seed(cfg.seed + tri)
-    torch.cuda.manual_seed(cfg.seed + tri)
+    fix_seed(cfg.seed + tri)
     train_loader = RandomNodeSampler(data, num_parts=40, shuffle=True,
                                      num_workers=0)
     test_loader = RandomNodeSampler(data, num_parts=5, shuffle=False, 
@@ -63,7 +62,7 @@ def train_and_test(tri, cfg, data, device):
                                  weight_decay = cfg['weight_decay'])
     evaluator = Evaluator('ogbn-proteins')
 
-    for epoch in tqdm(range(1, cfg['epochs'])):
+    for epoch in tqdm(range(1, cfg['epochs']+1)):
         train(train_loader, model, optimizer, device)
 
     return test(test_loader, model, evaluator, device)

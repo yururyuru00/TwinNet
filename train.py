@@ -2,7 +2,6 @@ import hydra
 from hydra import utils
 from omegaconf import DictConfig
 import mlflow
-import numpy as np
 import torch
 
 from train_planetoid import run as train_planetoid
@@ -12,18 +11,8 @@ from train_ppi import run as train_ppi
 from train_ppi_induct import run as train_ppi_induct
 from train_reddit import run as train_reddit
 from train_products import run as train_products
-
-def log_params_from_omegaconf_dict(params):
-    for param_name, value in params.items():
-        # print('{}: {}'.format(param_name, value))
-        mlflow.log_param(param_name, value)
-
-def log_artifacts(artifacts):
-    if artifacts is not None:
-        for artifact_name, artifact in artifacts.items():
-            if artifact is not None:
-                np.save(artifact_name, artifact.to('cpu').detach().numpy().copy())
-                mlflow.log_artifact(artifact_name)
+from train_mag import run as train_mag
+from utils import fix_seed, log_params_from_omegaconf_dict, log_artifacts
 
 
 @hydra.main(config_path='conf', config_name='config')
@@ -31,11 +20,9 @@ def main(cfg: DictConfig):
     cfg_mlflow = cfg.mlflow
     cfg = cfg[cfg.key]
     root = utils.get_original_cwd()
-
-    torch.manual_seed(cfg.seed)
-    torch.cuda.manual_seed(cfg.seed)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+    fix_seed(cfg.seed)
     mlflow.set_tracking_uri('http://' + cfg_mlflow.server_ip + ':5000')
     mlflow.set_experiment(cfg_mlflow.runname)
     with mlflow.start_run():
@@ -54,6 +41,8 @@ def main(cfg: DictConfig):
             valid_acces, test_acces, artifacts = train_reddit(cfg, root, device)
         elif cfg.dataset == 'Products':
             valid_acces, test_acces, artifacts = train_products(cfg, root, device)
+        elif cfg.dataset == 'MAG':
+            valid_acces, test_acces, artifacts = train_mag(cfg, root, device)
         
         for i, acc_test in enumerate(test_acces):
             mlflow.log_metric('acc_test', value=acc_test, step=i)
@@ -62,7 +51,7 @@ def main(cfg: DictConfig):
         mlflow.log_metric('acc_mean', value=test_acc_mean)
         mlflow.log_metric('acc_max', value=max(test_acces))
         mlflow.log_metric('acc_min', value=min(test_acces))
-        mlflow.log_metric('valid', value=valid_acc_mean)
+        mlflow.log_metric('valid_mean', value=valid_acc_mean)
         log_artifacts(artifacts)
 
     print('valid mean acc: {:.3f}'.format(valid_acc_mean))

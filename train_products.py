@@ -1,26 +1,40 @@
 import torch
 from tqdm import tqdm
-import torch.nn.functional as F
+import mlflow
 
+import torch.nn.functional as F
 from torch_geometric.loader import GraphSAINTRandomWalkSampler, NeighborSampler
 from ogb.nodeproppred import PygNodePropPredDataset, Evaluator
 
 from models.model_loader import load_net
 
 
-def train(loader, model, optimizer, device):
+def train(loader, model, optimizer, device, evaluator):
     model.train()
 
-    total_loss = 0
+    total_loss, total_acc, total_val_acc = 0, 0, 0
     for data in loader:
         data = data.to(device)
         optimizer.zero_grad()
         out, alpha = model(data.x, data.edge_index)
+        y_pred = out.argmax(dim=-1, keepdim=True)
         pred = torch.log_softmax(out, dim=-1)
         y = data.y.squeeze(1)
         loss = F.nll_loss(pred[data.train_mask], y[data.train_mask])
         loss.backward()
         optimizer.step()
+        total_loss += loss.item()
+
+        total_acc += evaluator.eval({
+                        'y_true': data.y[data.train_mask],
+                        'y_pred': y_pred[data.train_mask]
+                     })['acc']
+        total_val_acc += evaluator.eval({
+                        'y_true': data.y[data.valid_mask],
+                        'y_pred': y_pred[data.valid_mask]
+                     })['acc']
+
+    return total_loss / len(loader), total_acc / len(loader),  total_val_acc / len(loader)
 
 
 
@@ -65,8 +79,9 @@ def train_and_test(tri, cfg, data, device):
                                  weight_decay = cfg['weight_decay'])
     evaluator = Evaluator(name='ogbn-products')
 
-    for epoch in tqdm(range(1, cfg['epochs'])):
-        train(train_loader, model, optimizer, device)
+    for epoch in range(1, cfg['epochs']+1):
+        loss, acc, acc_val = train(train_loader, model, optimizer, device, evaluator)
+        print('epoch{} loss: {:.4f} acc: {:.4f} acc_val: {:.4f}'.format(epoch, loss, acc, acc_val))
 
     return test(data, test_loader, model, evaluator, device)
 

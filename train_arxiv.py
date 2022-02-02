@@ -48,7 +48,7 @@ def train_and_test(cfg, data, device):
                                  weight_decay = cfg['weight_decay'])
     evaluator = Evaluator('ogbn-arxiv')
 
-    for epoch in tqdm(range(1, cfg['epochs'])):
+    for epoch in tqdm(range(1, cfg['epochs']+1)):
         train(data, model, optimizer)
 
     return test(data, model, evaluator)

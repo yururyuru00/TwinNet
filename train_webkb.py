@@ -6,12 +6,7 @@ import torch_geometric.transforms as T
 from torch_geometric.datasets import WebKB
 
 from models.model_loader import load_net
-
-
-def accuracy(output, labels):
-    preds = output.max(1)[1].type_as(labels)
-    correct = preds.eq(labels).double()
-    return correct.sum() / len(labels), correct
+from utils import accuracy
 
 
 def train(tri, data, model, optimizer):
@@ -51,7 +46,7 @@ def train_and_test(tri, cfg, data, device):
 
     best_loss = 100.
     bad_counter = 0
-    for epoch in range(1, cfg.epochs):
+    for epoch in range(1, cfg.epochs+1):
         loss_val, acc_val = train(tri, data, model, optimizer)
 
         if loss_val < best_loss:

@@ -1,4 +1,4 @@
-key: TwinGCN_Cora
+key: RGCN_MAG
 
 
 # -------hydra & mlflow & optuna-------
@@ -22,7 +22,8 @@ defaults:
 # -------datasets (planetoid)-------
 
 Planetoid: &Planetoid
-  task: transductive
+  data_type: small-scale
+  epochs: 200
   n_tri: 10
   debug_mode: False
 
@@ -51,7 +52,7 @@ PubMed: &PubMed
 # -------datasets (web-kb)-------
 
 WebKB: &WebKB
-  task: transductive
+  data_type: small-scale
   epochs: 5000 # override >> GNN
   x_normalize: False
   n_feat: 1703
@@ -75,7 +76,7 @@ Wisconsin: &Wisconsin
 
 PPI: &PPI
   dataset: PPI
-  task: transductive
+  data_type: small-scale
   n_feat: 1 # num. of node feat
   e_feat: 8 # num. of edge feat
   n_class: 112
@@ -84,34 +85,43 @@ PPI: &PPI
 
 Arxiv: &Arxiv
   dataset: Arxiv
-  task: transductive
+  data_type: small-scale
   n_feat: 128
   n_class: 40
   n_tri: 5
   epochs: 500 # override >> GNN
 
-Products: &Products
-  dataset: Products
-  task: transductive
-  n_feat: 100
-  n_class: 47
-  n_tri: 1
-  epochs: 21 # override >> GNN
-
-Reddit: &Reddit
-  dataset: Reddit
-  task: transductive
-  n_feat: 602
-  n_class: 41
-  n_tri: 3
-  epochs: 11 # override >> GNN
-
 PPIinduct: &PPIinduct
   dataset: PPIinduct
-  task: inductive
+  data_type: small-scale
   n_feat: 50
   n_class: 121
   n_tri: 5
+  epochs: 200
+
+Reddit: &Reddit
+  dataset: Reddit
+  data_type: large-scale
+  n_feat: 602
+  n_class: 41
+  n_tri: 3
+  epochs: 10 # override >> GNN
+
+Products: &Products
+  dataset: Products
+  data_type: large-scale
+  n_feat: 100
+  n_class: 47
+  n_tri: 1
+  epochs: 20 # override >> GNN
+
+MAG: &MAG
+  dataset: MAG
+  data_type: heterogeneous
+  n_feat: 128
+  n_class: 349
+  n_tri: 3
+  epochs: 50 # override >> GNN
 
 
 # -------model interface-------
@@ -126,7 +136,6 @@ GNN: &GNN
   learning_rate: 0.001
   weight_decay: 0.0001
   seed: 42
-  epochs: 200
   patience: 100
   norm: None # [None, LayerNorm, BatchNorm1d]
 
@@ -158,6 +167,15 @@ SAGE: &SAGE
 
 GCN_Cora: &GCN_Cora
   <<: [*Cora, *GCN]
+  norm: None
+  n_layer: 2
+  n_hid: 16
+  dropout: 0.4
+  learning_rate: 0.01
+  weight_decay: 0.001
+
+GCN_CiteSeer: &GCN_CiteSeer
+  <<: [*CiteSeer, *GCN]
   norm: LayerNorm
   n_layer: 2
   n_hid: 16
@@ -165,24 +183,14 @@ GCN_Cora: &GCN_Cora
   learning_rate: 0.001
   weight_decay: 0.0005
 
-GCN_CiteSeer: &GCN_CiteSeer
-  <<: [*CiteSeer, *GCN]
-  # norm: LayerNorm
-  # n_layer: 2
-  # n_hid: 16
-  # dropout: 0.4
-  # learning_rate: 0.001
-  # weight_decay: 0.005
-
 GAT_PubMed: &GAT_PubMed
   <<: [*PubMed, *GAT]
-  # norm: LayerNorm
-  # n_layer: 2
-  # n_hid: 16
-  # n_head_last: 8
-  # dropout: 0.2
-  # learning_rate: 0.001
-  # weight_decay: 0.001
+  norm: LayerNorm
+  n_layer: 2
+  n_hid: 16
+  dropout: 0.4
+  learning_rate: 0.005
+  weight_decay: 0.001
 
 GAT_PPIinduct: &GAT_PPIinduct
   <<: [*PPIinduct, *GAT]
@@ -232,6 +240,15 @@ SAGE_Products: &SAGE_Products
   learning_rate: 0.01
   weight_decay: 0
 
+RGCN_MAG: &RGCN_MAG
+  <<: [*MAG, *GCN]
+  norm: None
+  n_layer: 2
+  n_hid: 64
+  dropout: 0.5
+  learning_rate: 0.01
+  weight_decay: 0
+
 
 
 # Jumping Knowledge Networks (JKNet)
@@ -264,6 +281,10 @@ JKSAGE_PPI: &JKSAGE_PPI
 JKSAGE_Products: &JKSAGE_Products
   <<: [*JK, *SAGE_Products]
 
+JKRGCN_MAG: &JKRGCN_MAG
+  <<: [*JK, *RGCN_MAG]
+
+
 # -------model instance (our study)-------
 
 # Twin-Graph Neural Networks (Twin-GNN)
@@ -278,33 +299,32 @@ Twin: &Twin
 TwinGCN_Cora: &TwinGCN_Cora
   <<: [*Twin, *GCN_Cora]
   n_layer: 6
-  temparature: 0.5
 
 TwinGCN_CiteSeer: &TwinGCN_CiteSeer
   <<: [*Twin, *GCN_CiteSeer]
-  n_layer: 8
+  n_layer: 4
   temparature: 0.1
 
 TwinGAT_PubMed: &TwinGAT_PubMed
   <<: [*Twin, *GAT_PubMed]
-  n_layer: 5
+  n_layer: 4
 
 TwinGAT_PPIinduct: &TwinGAT_PPIinduct
   <<: [*Twin, *GAT_PPIinduct]
   n_layer: 5
-  kernel: mx # maybe sdp
+  scope: global
+  temparature: -1
 
 TwinGCN_Arxiv: &TwinGCN_Arxiv
   <<: [*Twin, *GCN_Arxiv]
   n_layer: 6
-  kernel: mx
-  temparature: -0.7
+  temparature: 0.1
 
 TwinSAGE_Reddit: &TwinSAGE_Reddit
   <<: [*Twin, *SAGE_Reddit]
   n_layer: 3
-  temparature: 0.5
-  # not yet tuning
+  scope: global
+  temparature: -0.1
 
 TwinSAGE_PPI: &TwinSAGE_PPI
   <<: [*Twin, *SAGE_PPI]
@@ -313,4 +333,8 @@ TwinSAGE_PPI: &TwinSAGE_PPI
 
 TwinSAGE_Products: &TwinSAGE_Products
   <<: [*Twin, *SAGE_Products]
+  # not yet tuning
+
+TwinRGCN_MAG: &TwinRGCN_MAG
+  <<: [*Twin, *RGCN_MAG]
   # not yet tuning

@@ -8,12 +8,7 @@ import torch_geometric.transforms as T
 from torch_geometric.datasets import Planetoid
 
 from models.model_loader import load_net
-
-
-def accuracy(output, labels):
-    preds = output.max(1)[1].type_as(labels)
-    correct = preds.eq(labels).double()
-    return correct.sum() / len(labels), correct
+from utils import fix_seed, accuracy
 
 
 def train(data, model, optimizer):
@@ -54,7 +49,7 @@ def train_and_test(cfg, data, device):
 
     best_loss = 100.
     bad_counter = 0
-    for epoch in range(1, cfg.epochs):
+    for epoch in range(1, cfg.epochs+1):
         loss_val, acc_val = train(data, model, optimizer)
 
         if loss_val < best_loss:
@@ -79,8 +74,9 @@ def run(cfg, root, device):
     valid_acces, test_acces, artifacts = [], [], {}
     for tri in tqdm(range(cfg.n_tri)):
         if cfg.debug_mode:
-            torch.manual_seed(cfg.seed)
-            torch.cuda.manual_seed(cfg.seed)
+            fix_seed(cfg.seed)
+        else:
+            fix_seed(cfg.seed + tri)
         dataset = Planetoid(root      = root + '/data/' + cfg.dataset,
                             name      = cfg.dataset,
                             transform = transforms)

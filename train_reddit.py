@@ -57,7 +57,7 @@ def train_and_test(tri, cfg, data, device):
                                  lr           = cfg['learning_rate'], 
                                  weight_decay = cfg['weight_decay'])
     
-    for epoch in tqdm(range(1, cfg['epochs'])):
+    for epoch in tqdm(range(1, cfg['epochs']+1)):
         train(data, train_loader, model, optimizer, device)
 
     return test(data, test_loader, model, device)

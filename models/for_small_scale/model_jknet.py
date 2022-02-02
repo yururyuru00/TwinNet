@@ -80,7 +80,8 @@ class JKGAT(nn.Module):
     def __init__(self, cfg):
         super(JKGAT, self).__init__()
         self.dropout = cfg.dropout
-    
+        self.act = eval(f'nn.' + cfg.activation + '()')
+
         self.convs = nn.ModuleList()
         self.skips = nn.ModuleList()
         in_conv = GNNConv('gat_conv', cfg.n_feat, cfg.n_hid, cfg.norm,
