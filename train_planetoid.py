@@ -76,7 +76,8 @@ def run(cfg, root, device):
         if cfg.debug_mode:
             fix_seed(cfg.seed)
         else:
-            fix_seed(cfg.seed + tri)
+            fix_seed(cfg.seed + tri) 
+        # [train, valid, test] is splited based on above seed
         dataset = Planetoid(root      = root + '/data/' + cfg.dataset,
                             name      = cfg.dataset,
                             transform = transforms)

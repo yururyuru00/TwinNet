@@ -105,7 +105,7 @@ Reddit: &Reddit
   n_feat: 602
   n_class: 41
   n_tri: 3
-  epochs: 10 # override >> GNN
+  epochs: 20 # override >> GNN
 
 Products: &Products
   dataset: Products
@@ -215,12 +215,12 @@ GCN_Arxiv: &GCN_Arxiv
 
 SAGE_Reddit: &SAGE_Reddit
   <<: [*Reddit, *SAGE]
-  norm: None
-  n_layer: 2
-  n_hid: 128
-  dropout: 0
+  norm: BatchNorm1d
+  n_layer: 3
+  n_hid: 256
+  dropout: 0.6
   learning_rate: 0.001
-  weight_decay: 0
+  weight_decay: 0.0001
 
 SAGE_PPI: &SAGE_PPI
   <<: [*PPI, *SAGE]
@@ -298,7 +298,7 @@ Twin: &Twin
 
 TwinGCN_Cora: &TwinGCN_Cora
   <<: [*Twin, *GCN_Cora]
-  n_layer: 6
+  n_layer: 9
 
 TwinGCN_CiteSeer: &TwinGCN_CiteSeer
   <<: [*Twin, *GCN_CiteSeer]
@@ -307,22 +307,21 @@ TwinGCN_CiteSeer: &TwinGCN_CiteSeer
 
 TwinGAT_PubMed: &TwinGAT_PubMed
   <<: [*Twin, *GAT_PubMed]
-  n_layer: 4
+  n_layer: 7
 
 TwinGAT_PPIinduct: &TwinGAT_PPIinduct
   <<: [*Twin, *GAT_PPIinduct]
   n_layer: 5
   scope: global
-  temparature: -1
+  temparature: -0.5
 
 TwinGCN_Arxiv: &TwinGCN_Arxiv
   <<: [*Twin, *GCN_Arxiv]
-  n_layer: 6
-  temparature: 0.1
+  n_layer: 4
 
 TwinSAGE_Reddit: &TwinSAGE_Reddit
   <<: [*Twin, *SAGE_Reddit]
-  n_layer: 3
+  n_layer: 4
   scope: global
   temparature: -0.1
 
