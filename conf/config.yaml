@@ -121,7 +121,7 @@ MAG: &MAG
   n_feat: 128
   n_class: 349
   n_tri: 3
-  epochs: 50 # override >> GNN
+  epochs: 100 # override >> GNN
 
 
 # -------model interface-------
@@ -218,7 +218,7 @@ SAGE_Reddit: &SAGE_Reddit
   norm: BatchNorm1d
   n_layer: 3
   n_hid: 256
-  dropout: 0.6
+  dropout: 0.3
   learning_rate: 0.001
   weight_decay: 0.0001
 
@@ -247,8 +247,7 @@ RGCN_MAG: &RGCN_MAG
   n_hid: 64
   dropout: 0.5
   learning_rate: 0.01
-  weight_decay: 0
-
+  weight_decay: 0.0001 # 0.0001 or 0
 
 
 # Jumping Knowledge Networks (JKNet)
@@ -321,7 +320,7 @@ TwinGCN_Arxiv: &TwinGCN_Arxiv
 
 TwinSAGE_Reddit: &TwinSAGE_Reddit
   <<: [*Twin, *SAGE_Reddit]
-  n_layer: 4
+  n_layer: 3
   scope: global
   temparature: -0.1
 
