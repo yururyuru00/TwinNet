@@ -1,4 +1,6 @@
+from termios import ECHOPRT
 from tqdm import tqdm
+import mlflow
 
 import torch
 import torch.nn.functional as F
@@ -33,7 +35,7 @@ def test(tri, data, model):
     model.eval()
     h, alpha = model(data.x, data.edge_index)
     prob_labels_test = F.log_softmax(h, dim=1)
-    acc = accuracy(prob_labels_test[data.test_mask[:,tri]], data.y[data.test_mask[:,tri]])
+    acc, _ = accuracy(prob_labels_test[data.test_mask[:,tri]], data.y[data.test_mask[:,tri]])
 
     return acc
 
@@ -48,6 +50,10 @@ def train_and_test(tri, cfg, data, device):
     bad_counter = 0
     for epoch in range(1, cfg.epochs+1):
         loss_val, acc_val = train(tri, data, model, optimizer)
+        acc_test = test(tri, data, model)
+        if epoch == 1 or epoch % 100 == 0:
+            mlflow.log_metric(str(tri)+'th_valid_acces', value=acc_val.item(), step=epoch)
+            mlflow.log_metric(str(tri)+'th_test_acces', value=acc_test.item(), step=epoch)
 
         if loss_val < best_loss:
             best_loss = loss_val
@@ -63,8 +69,7 @@ def train_and_test(tri, cfg, data, device):
 
 def run(cfg, root, device):
     dataset = WebKB(root      = root + '/data/' + cfg.dataset,
-                    name      = cfg.dataset,
-                    transform = cfg.transform)
+                    name      = cfg.dataset)
     data = dataset.data.to(device)
 
     valid_acces, test_acces = [], []

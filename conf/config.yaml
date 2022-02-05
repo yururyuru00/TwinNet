@@ -1,4 +1,4 @@
-key: RGCN_MAG
+key: GCN_Texas
 
 
 # -------hydra & mlflow & optuna-------
@@ -191,6 +191,15 @@ GAT_PubMed: &GAT_PubMed
   dropout: 0.4
   learning_rate: 0.005
   weight_decay: 0.001
+
+GCN_Texas: &GCN_Texas
+  <<: [*Texas, *GCN]
+  norm: None
+  n_layer: 2
+  n_hid: 32
+  dropout: 0.9
+  learning_rate: 0.05
+  weight_decay: 1e-2
 
 GAT_PPIinduct: &GAT_PPIinduct
   <<: [*PPIinduct, *GAT]

@@ -23,7 +23,7 @@ ary=("
 
      python3 train.py -m mlflow.runname=temparature 'key=TwinSAGE_Reddit' \
      'TwinSAGE_Reddit.scope=global' \
-     'TwinSAGE_Reddit.temparature=choice(-0.001,-0.1,-0.2,-0.3,-0.4,-0.5,-0.6,-0.7,-0.8,-0.9,-1)'
+     'TwinSAGE_Reddit.temparature=choice(-0.7,-0.8,-0.9,-1)'
      ")
 
 
