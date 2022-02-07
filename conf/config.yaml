@@ -192,14 +192,32 @@ GAT_PubMed: &GAT_PubMed
   learning_rate: 0.005
   weight_decay: 0.001
 
+GCN_Cornell: &GCN_Cornell
+  <<: [*Cornell, *GCN]
+  norm: None
+  n_layer: 2
+  n_hid: 32
+  dropout: 0.5
+  learning_rate: 0.05
+  weight_decay: 5e-6
+
 GCN_Texas: &GCN_Texas
   <<: [*Texas, *GCN]
   norm: None
   n_layer: 2
   n_hid: 32
-  dropout: 0.9
+  dropout: 0.5
   learning_rate: 0.05
-  weight_decay: 1e-2
+  weight_decay: 5e-6
+
+GCN_Wisconsin: &GCN_Wisconsin
+  <<: [*Wisconsin, *GCN]
+  norm: None
+  n_layer: 2
+  n_hid: 32
+  dropout: 0.5
+  learning_rate: 0.05
+  weight_decay: 5e-6
 
 GAT_PPIinduct: &GAT_PPIinduct
   <<: [*PPIinduct, *GAT]
@@ -303,7 +321,7 @@ Twin: &Twin
   temparature: 1 # \in R
   self_loop: True # [True, False]
 
-
+# Planetoid
 TwinGCN_Cora: &TwinGCN_Cora
   <<: [*Twin, *GCN_Cora]
   n_layer: 9
@@ -317,6 +335,17 @@ TwinGAT_PubMed: &TwinGAT_PubMed
   <<: [*Twin, *GAT_PubMed]
   n_layer: 7
 
+# WebKB
+TwinGCN_Cornell: &TwinGCN_Cornell
+  <<: [*Twin, *GCN_Cornell]
+
+TwinGCN_Texas: &TwinGCN_Texas
+  <<: [*Twin, *GCN_Cornell]
+
+TwinGCN_Wisconsin: &TwinGCN_Wisconsin
+  <<: [*Twin, *GCN_Cornell]
+
+# Others
 TwinGAT_PPIinduct: &TwinGAT_PPIinduct
   <<: [*Twin, *GAT_PPIinduct]
   n_layer: 5

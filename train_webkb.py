@@ -1,6 +1,7 @@
 from termios import ECHOPRT
 from tqdm import tqdm
 import mlflow
+import numpy as np
 
 import torch
 import torch.nn.functional as F
@@ -46,22 +47,23 @@ def train_and_test(tri, cfg, data, device):
                                  lr           = cfg.learning_rate, 
                                  weight_decay = cfg.weight_decay)
 
-    best_loss = 100.
-    bad_counter = 0
+    loss_val_min = np.inf
+    acc_val_max = 0.0
     for epoch in range(1, cfg.epochs+1):
         loss_val, acc_val = train(tri, data, model, optimizer)
         acc_test = test(tri, data, model)
-        if epoch == 1 or epoch % 100 == 0:
-            mlflow.log_metric(str(tri)+'th_valid_acces', value=acc_val.item(), step=epoch)
-            mlflow.log_metric(str(tri)+'th_test_acces', value=acc_test.item(), step=epoch)
+        # mlflow.log_metric(str(tri)+'th_valid_acces', value=acc_val.item(), step=epoch)
+        # mlflow.log_metric(str(tri)+'th_test_acces', value=acc_test.item(), step=epoch)
 
-        if loss_val < best_loss:
-            best_loss = loss_val
-            bad_counter = 0
+        # Adapted from https://github.com/PetarV-/GAT/blob/master/execute_cora.py
+        if acc_val >= acc_val_max or loss_val <= loss_val_min:
+            acc_val_max = np.max((acc_val, acc_val_max))
+            loss_val_min = np.min((loss_val, loss_val_min))
+            curr_step = 0
         else:
-            bad_counter += 1
-        if bad_counter == cfg.patience:
-            break
+            curr_step += 1
+            if curr_step >= cfg.patience:
+                break
 
     acc_test = test(tri, data, model)
     return acc_val, acc_test
