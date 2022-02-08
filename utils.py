@@ -10,7 +10,7 @@ def fix_seed(seed):
 
 def log_params_from_omegaconf_dict(params):
     for param_name, value in params.items():
-        print('{}: {}'.format(param_name, value))
+        # print('{}: {}'.format(param_name, value))
         mlflow.log_param(param_name, value)
 
 def log_artifacts(artifacts):
@@ -24,3 +24,12 @@ def accuracy(output, labels):
     preds = output.max(1)[1].type_as(labels)
     correct = preds.eq(labels).double()
     return correct.sum() / len(labels), correct
+
+
+class ExtractSubGraph:
+    def __init__(self, target_label_ids):
+        self.target
+    
+
+    def __call__(self, data):
+        return data

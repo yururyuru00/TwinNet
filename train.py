@@ -4,14 +4,15 @@ from omegaconf import DictConfig
 import mlflow
 import torch
 
-from train_planetoid import run as train_planetoid
-from train_webkb import run as train_webkb
-from train_arxiv import run as train_arxiv
-from train_ppi import run as train_ppi
+from train_synthesis  import run as train_synthesis
+from train_planetoid  import run as train_planetoid
+from train_webkb      import run as train_webkb
+from train_arxiv      import run as train_arxiv
+from train_ppi        import run as train_ppi
 from train_ppi_induct import run as train_ppi_induct
-from train_reddit import run as train_reddit
-from train_products import run as train_products
-from train_mag import run as train_mag
+from train_reddit     import run as train_reddit
+from train_products   import run as train_products
+from train_mag        import run as train_mag
 from utils import fix_seed, log_params_from_omegaconf_dict, log_artifacts
 
 
@@ -27,7 +28,9 @@ def main(cfg: DictConfig):
     mlflow.set_experiment(cfg_mlflow.runname)
     with mlflow.start_run():
         log_params_from_omegaconf_dict(cfg)
-        if cfg.dataset in ['Cora', 'CiteSeer', 'PubMed']:
+        if cfg.dataset   == 'Synthesis':
+            valid_acces, test_acces, artifacts = train_synthesis(cfg, root, device)
+        elif cfg.dataset in ['Cora', 'CiteSeer', 'PubMed']:
             valid_acces, test_acces, artifacts = train_planetoid(cfg, root, device)
         elif cfg.dataset in ['Cornell', 'Texas', 'Wisconsin']:
             valid_acces, test_acces, artifacts = train_webkb(cfg, root, device)

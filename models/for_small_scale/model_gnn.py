@@ -75,7 +75,7 @@ class GAT(nn.Module):
     def __init__(self, cfg):
         super(GAT, self).__init__()
         self.dropout = cfg.dropout
-        self.act = eval(f'nn.' + cfg.activation + '()') # ReLU or Identity
+        self.act = eval(f'nn.' + cfg.activation + '()') # ELU or Identity
 
         self.in_conv = GNNConv('gat_conv', cfg.n_feat, cfg.n_hid, cfg.norm,
                                n_heads     = [1, cfg.n_head],
