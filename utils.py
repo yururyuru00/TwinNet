@@ -2,7 +2,7 @@ import mlflow
 import numpy as np
 
 import torch
-
+from torch_geometric.utils import subgraph
 
 def fix_seed(seed):
     torch.manual_seed(seed)
@@ -24,12 +24,3 @@ def accuracy(output, labels):
     preds = output.max(1)[1].type_as(labels)
     correct = preds.eq(labels).double()
     return correct.sum() / len(labels), correct
-
-
-class ExtractSubGraph:
-    def __init__(self, target_label_ids):
-        self.target
-    
-
-    def __call__(self, data):
-        return data

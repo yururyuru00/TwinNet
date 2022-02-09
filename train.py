@@ -4,7 +4,7 @@ from omegaconf import DictConfig
 import mlflow
 import torch
 
-from train_synthesis  import run as train_synthesis
+from train_syn_cora   import run as train_syn_cora
 from train_planetoid  import run as train_planetoid
 from train_webkb      import run as train_webkb
 from train_arxiv      import run as train_arxiv
@@ -28,8 +28,8 @@ def main(cfg: DictConfig):
     mlflow.set_experiment(cfg_mlflow.runname)
     with mlflow.start_run():
         log_params_from_omegaconf_dict(cfg)
-        if cfg.dataset   == 'Synthesis':
-            valid_acces, test_acces, artifacts = train_synthesis(cfg, root, device)
+        if cfg.dataset   == 'SynCora':
+            valid_acces, test_acces, artifacts = train_syn_cora(cfg, root, device)
         elif cfg.dataset in ['Cora', 'CiteSeer', 'PubMed']:
             valid_acces, test_acces, artifacts = train_planetoid(cfg, root, device)
         elif cfg.dataset in ['Cornell', 'Texas', 'Wisconsin']:

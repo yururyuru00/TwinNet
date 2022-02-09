@@ -1,4 +1,4 @@
-key: GCN_Synthesis
+key: GCN_SynCora
 
 
 # -------hydra & mlflow & optuna-------
@@ -21,14 +21,16 @@ defaults:
 
 # -------datasets (synthesis)-------
 
-Synthesis: &Synthesis
-  dataset: Synthesis
+SynCora: &SynCora
+  dataset: SynCora
   data_type: small-scale
-  n_feat: 2
-  n_class: 10
-  homophily: 0.8 # [0.0, 0.1, ..., 0.9]
-  n_tri: 10
+  n_feat: 1433
+  n_class: 5
+  homophily: 0.8 # [0.0, 0.1, ..., 0.9, 1.0]
   epochs: 2000
+  n_tri: 3
+  debug_mode: False
+  split_seed: 1 # [1(r1), 2(r2), 3(r3)]
 
 # -------datasets (planetoid)-------
 
@@ -176,25 +178,15 @@ SAGE: &SAGE
 
 # -------model instance + dataset-------
 
-GCN_Synthesis: &GCN_Synthesis
-  <<: [*Synthesis, *GCN]
-  norm: LayerNorm
+GCN_SynCora: &GCN_SynCora
+  <<: [*SynCora, *GCN]
+  norm: None
   n_layer: 2
-  n_hid: 32
+  n_hid: 16 # [16, 32, 64]
   dropout: 0.4
-  learning_rate: 0.05
-  weight_decay: 5e-4
-  patience: 40
-
-GAT_Synthesis: &GAT_Synthesis
-  <<: [*Synthesis, *GAT]
-  norm: LayerNorm
-  n_layer: 2
-  n_hid: 8
-  dropout: 0.4
-  learning_rate: 0.05
-  weight_decay: 5e-4
-  patience: 40
+  learning_rate: 0.01
+  weight_decay: 0.001
+  parience: 100 # [40, 100, 200]
 
 GCN_Cora: &GCN_Cora
   <<: [*Cora, *GCN]
@@ -354,8 +346,8 @@ Twin: &Twin
   self_loop: True # [True, False]
 
 # Synthesis
-TwinGCN_Synthesis: &TwinGCN_Synthesis
-  <<: [*Twin, *GCN_Synthesis]
+TwinGCN_SynCora: &TwinGCN_SynCora
+  <<: [*Twin, *GCN_SynCora]
   n_layer: 2
 
 # Planetoid

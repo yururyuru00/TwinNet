@@ -1,14 +1,9 @@
-from tqdm import tqdm
-import numpy as np
-import mlflow
-
 import torch
 import torch.nn.functional as F
-import torch_geometric.transforms as T
-from torch_geometric.datasets import MixHopSyntheticDataset
 
+from utils import accuracy
 from models.model_loader import load_net
-from utils import fix_seed, accuracy
+from data.load_syn import CustomDataset
 
 
 def train(data, model, optimizer):
@@ -66,11 +61,17 @@ def train_and_test(cfg, data, device):
 
 def run(cfg, root, device):
     valid_acces, test_acces, artifacts = [], [], {}
-    for tri in tqdm(range(cfg.n_tri)):
+    for tri in range(cfg.n_tri):
+        if cfg.debug_mode:
+            split_seed = cfg.split_seed # [1, 2, 3]
+        else:
+            split_seed = tri + 1
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        dataset = MixHopSyntheticDataset(root      = root+'/data/syn/h{}'.format(cfg.homophily),
-                                         homophily = cfg.homophily)
-        data = dataset[0].to(device)
+        data = CustomDataset(
+                    root=root+"/data/syn-cora", name="h{}0-r{}".format(cfg.homophily, split_seed),
+                    setting="gcn", seed=15, require_mask=True
+               )
+        data.to_torch_tensor(device)
 
         valid_acc, test_acc, alpha, correct = train_and_test(cfg, data, device)
         valid_acces.append(valid_acc.to('cpu').item())
