@@ -46,7 +46,7 @@ def main(cfg: DictConfig):
             valid_acces, test_acces, artifacts = train_products(cfg, root, device)
         elif cfg.dataset == 'MAG':
             valid_acces, test_acces, artifacts = train_mag(cfg, root, device)
-        
+
         for i, acc_test in enumerate(test_acces):
             mlflow.log_metric('acc_test', value=acc_test, step=i)
         valid_acc_mean = sum(valid_acces)/len(valid_acces)
