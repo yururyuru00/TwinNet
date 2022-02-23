@@ -26,11 +26,11 @@ SynCora: &SynCora
   data_type: small-scale
   n_feat: 1433
   n_class: 5
-  homophily: 0.8 # [0.0, 0.1, ..., 0.9, 1.0]
+  homophily: 0.0 # [0.0, 0.1, ..., 0.9, 1.0]
   epochs: 2000
   n_tri: 3
   debug_mode: False
-  split_seed: 1 # [1(r1), 2(r2), 3(r3)] only debug_mode
+  split_seed: 3 # [1(r1), 2(r2), 3(r3)] only debug_mode
 
 # -------datasets (planetoid)-------
 
@@ -178,6 +178,7 @@ SAGE: &SAGE
 
 # -------model instance + dataset-------
 
+# Synthesis
 GCN_SynCora: &GCN_SynCora
   <<: [*SynCora, *GCN]
   norm: None
@@ -187,6 +188,7 @@ GCN_SynCora: &GCN_SynCora
   learning_rate: 0.001
   weight_decay: 0.001
 
+# Planetoid
 GCN_Cora: &GCN_Cora
   <<: [*Cora, *GCN]
   norm: None
@@ -214,6 +216,7 @@ GAT_PubMed: &GAT_PubMed
   learning_rate: 0.005
   weight_decay: 0.001
 
+# WebKB
 GCN_Cornell: &GCN_Cornell
   <<: [*Cornell, *GCN]
   norm: None
@@ -241,6 +244,7 @@ GCN_Wisconsin: &GCN_Wisconsin
   learning_rate: 0.05
   weight_decay: 5e-6
 
+# Others
 GAT_PPIinduct: &GAT_PPIinduct
   <<: [*PPIinduct, *GAT]
   skip_connection: highway
@@ -378,8 +382,6 @@ TwinGCN_Wisconsin: &TwinGCN_Wisconsin
 TwinGAT_PPIinduct: &TwinGAT_PPIinduct
   <<: [*Twin, *GAT_PPIinduct]
   n_layer: 5
-  scope: global
-  temparature: -0.5
 
 TwinGCN_Arxiv: &TwinGCN_Arxiv
   <<: [*Twin, *GCN_Arxiv]
@@ -388,8 +390,6 @@ TwinGCN_Arxiv: &TwinGCN_Arxiv
 TwinSAGE_Reddit: &TwinSAGE_Reddit
   <<: [*Twin, *SAGE_Reddit]
   n_layer: 3
-  scope: global
-  temparature: -0.1
 
 TwinSAGE_PPI: &TwinSAGE_PPI
   <<: [*Twin, *SAGE_PPI]

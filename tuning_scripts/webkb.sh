@@ -16,3 +16,4 @@ for STR in ${ary[@]}
 do
     eval "${STR}"
 done
+
