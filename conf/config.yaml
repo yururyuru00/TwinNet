@@ -198,6 +198,9 @@ GCN_Cora: &GCN_Cora
   learning_rate: 0.01
   weight_decay: 0.001
 
+GAT_Cora: &GAT_Cora
+  <<: [*GCN_Cora, *GAT]
+
 GCN_CiteSeer: &GCN_CiteSeer
   <<: [*CiteSeer, *GCN]
   norm: LayerNorm
@@ -207,14 +210,20 @@ GCN_CiteSeer: &GCN_CiteSeer
   learning_rate: 0.001
   weight_decay: 0.0005
 
-GAT_PubMed: &GAT_PubMed
-  <<: [*PubMed, *GAT]
+GAT_CiteSeer: &GAT_CiteSeer
+  <<: [*GCN_CiteSeer, *GAT]
+
+GCN_PubMed: &GCN_PubMed
+  <<: [*PubMed, *GCN]
   norm: LayerNorm
   n_layer: 2
   n_hid: 16
   dropout: 0.4
   learning_rate: 0.005
   weight_decay: 0.001
+
+GAT_PubMed: &GAT_PubMed
+  <<: [*GCN_PubMed, *GAT]
 
 # WebKB
 GCN_Cornell: &GCN_Cornell
@@ -245,17 +254,20 @@ GCN_Wisconsin: &GCN_Wisconsin
   weight_decay: 5e-6
 
 # Others
-GAT_PPIinduct: &GAT_PPIinduct
-  <<: [*PPIinduct, *GAT]
+GCN_PPIinduct: &GCN_PPIinduct
+  <<: [*PPIinduct, *GCN]
   skip_connection: highway
   norm: BatchNorm1d
   n_layer: 3
   n_hid: 256
-  n_head: 4
-  n_head_last: 6
   dropout: 0
   learning_rate: 0.001
   weight_decay: 0
+
+GAT_PPIinduct: &GAT_PPIinduct
+  <<: [*GCN_PPIinduct, *GAT]
+  n_head: 4
+  n_head_last: 6
 
 GCN_Arxiv: &GCN_Arxiv
   <<: [*Arxiv, *GCN]
@@ -266,8 +278,11 @@ GCN_Arxiv: &GCN_Arxiv
   learning_rate: 0.001
   weight_decay: 0
 
-SAGE_Reddit: &SAGE_Reddit
-  <<: [*Reddit, *SAGE]
+GAT_Arxiv: &GAT_Arxiv
+  <<: [*GCN_Arxiv, *GAT]
+
+GCN_Reddit: &GCN_Reddit
+  <<: [*Reddit, *GCN]
   norm: BatchNorm1d
   n_layer: 3
   n_hid: 256
@@ -275,14 +290,20 @@ SAGE_Reddit: &SAGE_Reddit
   learning_rate: 0.001
   weight_decay: 0.0001
 
-SAGE_PPI: &SAGE_PPI
-  <<: [*PPI, *SAGE]
+SAGE_Reddit: &SAGE_Reddit
+  <<: [*GCN_Reddit, *SAGE]
+
+GCN_PPI: &GCN_PPI
+  <<: [*PPI, *GCN]
   norm: BatchNorm1d
   n_layer: 4
   n_hid: 256
   dropout: 0.6
   learning_rate: 0.005
   weight_decay: 0
+
+SAGE_PPI: &SAGE_PPI
+  <<: [*GCN_PPI, *SAGE]
 
 SAGE_Products: &SAGE_Products
   <<: [*Products, *SAGE]
