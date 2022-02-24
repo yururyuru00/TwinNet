@@ -199,7 +199,7 @@ GCN_Cora: &GCN_Cora
   weight_decay: 0.001
 
 GAT_Cora: &GAT_Cora
-  <<: [*GCN_Cora, *GAT]
+  <<: [*GAT, *GCN_Cora]
 
 GCN_CiteSeer: &GCN_CiteSeer
   <<: [*CiteSeer, *GCN]
@@ -211,7 +211,7 @@ GCN_CiteSeer: &GCN_CiteSeer
   weight_decay: 0.0005
 
 GAT_CiteSeer: &GAT_CiteSeer
-  <<: [*GCN_CiteSeer, *GAT]
+  <<: [*GAT, *GCN_CiteSeer]
 
 GCN_PubMed: &GCN_PubMed
   <<: [*PubMed, *GCN]
@@ -223,7 +223,7 @@ GCN_PubMed: &GCN_PubMed
   weight_decay: 0.001
 
 GAT_PubMed: &GAT_PubMed
-  <<: [*GCN_PubMed, *GAT]
+  <<: [*GAT, *GCN_PubMed]
 
 # WebKB
 GCN_Cornell: &GCN_Cornell
@@ -265,7 +265,7 @@ GCN_PPIinduct: &GCN_PPIinduct
   weight_decay: 0
 
 GAT_PPIinduct: &GAT_PPIinduct
-  <<: [*GCN_PPIinduct, *GAT]
+  <<: [*GAT, *GCN_PPIinduct]
   n_head: 4
   n_head_last: 6
 
@@ -279,7 +279,7 @@ GCN_Arxiv: &GCN_Arxiv
   weight_decay: 0
 
 GAT_Arxiv: &GAT_Arxiv
-  <<: [*GCN_Arxiv, *GAT]
+  <<: [*GAT, *GCN_Arxiv]
 
 GCN_Reddit: &GCN_Reddit
   <<: [*Reddit, *GCN]
@@ -291,7 +291,7 @@ GCN_Reddit: &GCN_Reddit
   weight_decay: 0.0001
 
 SAGE_Reddit: &SAGE_Reddit
-  <<: [*GCN_Reddit, *SAGE]
+  <<: [*SAGE, *GCN_Reddit]
 
 GCN_PPI: &GCN_PPI
   <<: [*PPI, *GCN]
@@ -303,7 +303,7 @@ GCN_PPI: &GCN_PPI
   weight_decay: 0
 
 SAGE_PPI: &SAGE_PPI
-  <<: [*GCN_PPI, *SAGE]
+  <<: [*SAGE, *GCN_PPI]
 
 SAGE_Products: &SAGE_Products
   <<: [*Products, *SAGE]
@@ -334,8 +334,17 @@ JK: &JK
 JKGCN_Cora: &JKGCN_Cora
   <<: [*JK, *GCN_Cora]
 
+JKGAT_Cora: &JKGAT_Cora
+  <<: [*JK, *GAT_Cora]
+
 JKGCN_CiteSeer: &JKGCN_CiteSeer
   <<: [*JK, *GCN_CiteSeer]
+
+JKGAT_CiteSeer: &JKGAT_CiteSeer
+  <<: [*JK, *GAT_CiteSeer]
+
+JKGCN_PubMed: &JKGCN_PubMed
+  <<: [*JK, *GCN_PubMed]
 
 JKGAT_PubMed: &JKGAT_PubMed
   <<: [*JK, *GAT_PubMed]
@@ -343,8 +352,8 @@ JKGAT_PubMed: &JKGAT_PubMed
 JKGAT_PPIinduct: &JKGAT_PPIinduct
   <<: [*JK, *GAT_PPIinduct]
 
-JKGCN_Arxiv: &JKGCN_Arxiv
-  <<: [*JK, *GCN_Arxiv]
+JKGAT_Arxiv: &JKGAT_Arxiv
+  <<: [*JK, *GAT_Arxiv]
 
 JKSAGE_Reddit: &JKSAGE_Reddit
   <<: [*JK, *SAGE_Reddit]
@@ -380,10 +389,19 @@ TwinGCN_Cora: &TwinGCN_Cora
   <<: [*Twin, *GCN_Cora]
   n_layer: 9
 
+TwinGAT_Cora: &TwinGAT_Cora
+  <<: [*Twin, *GAT_Cora]
+
 TwinGCN_CiteSeer: &TwinGCN_CiteSeer
   <<: [*Twin, *GCN_CiteSeer]
   n_layer: 4
   temparature: 0.1
+
+TwinGAT_CiteSeer: &TwinGAT_CiteSeer
+  <<: [*Twin, *GAT_CiteSeer]
+
+TwinGCN_PubMed: &TwinGCN_PubMed
+  <<: [*Twin, *GCN_PubMed]
 
 TwinGAT_PubMed: &TwinGAT_PubMed
   <<: [*Twin, *GAT_PubMed]
@@ -404,9 +422,8 @@ TwinGAT_PPIinduct: &TwinGAT_PPIinduct
   <<: [*Twin, *GAT_PPIinduct]
   n_layer: 5
 
-TwinGCN_Arxiv: &TwinGCN_Arxiv
-  <<: [*Twin, *GCN_Arxiv]
-  n_layer: 4
+TwinGAT_Arxiv: &TwinGAT_Arxiv
+  <<: [*Twin, *GAT_Arxiv]
 
 TwinSAGE_Reddit: &TwinSAGE_Reddit
   <<: [*Twin, *SAGE_Reddit]
