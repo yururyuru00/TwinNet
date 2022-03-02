@@ -27,6 +27,20 @@ ary=("
 
      python3 train.py -m mlflow.runname=for_paper 'key=TwinSAGE_Reddit' \
      'TwinSAGE_Reddit.n_layer=range(2,4)'
+
+
+     python3 train.py -m mlflow.runname=for_paper 'key=GCN_Arxiv' \
+     'GCN_Arxiv.n_layer=range(2,10)'
+
+     python3 train.py -m mlflow.runname=for_paper 'key=SAGE_Arxiv' \
+     'SAGE_Arxiv.n_layer=range(2,10)'
+
+     python3 train.py -m mlflow.runname=for_paper 'key=JKSAGE_Arxiv' \
+     'JKSAGE_Arxiv.jk_mode=choice(max,cat,lstm)' \
+     'JKSAGE_Arxiv.n_layer=range(2,10)'
+
+     python3 train.py -m mlflow.runname=for_paper 'key=TwinSAGE_Arxiv' \
+     'TwinSAGE_Arxiv.n_layer=range(2,10)'
      ")
 
 

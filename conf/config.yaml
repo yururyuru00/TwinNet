@@ -19,18 +19,6 @@ defaults:
 #     n_jobs: 1
 #     n_trials: 100
 
-# -------datasets (synthesis)-------
-
-SynCora: &SynCora
-  dataset: SynCora
-  data_type: small-scale
-  n_feat: 1433
-  n_class: 5
-  homophily: 0.0 # [0.0, 0.1, ..., 0.9, 1.0]
-  epochs: 2000
-  n_tri: 3
-  debug_mode: False
-  split_seed: 3 # [1(r1), 2(r2), 3(r3)] only debug_mode
 
 # -------datasets (planetoid)-------
 
@@ -60,30 +48,6 @@ PubMed: &PubMed
   x_normalize: False
   n_feat: 500
   n_class: 3
-
-
-# -------datasets (web-kb)-------
-
-WebKB: &WebKB
-  data_type: small-scale
-  epochs: 5000 # override >> GNN
-  x_normalize: False
-  n_feat: 1703
-  n_tri: 10 # following original paper
-  n_class: 5
-
-Cornell: &Cornell
-  <<: *WebKB
-  dataset: Cornell
-
-Texas: &Texas
-  <<: *WebKB
-  dataset: Texas
-
-Wisconsin: &Wisconsin
-  <<: *WebKB
-  dataset: Wisconsin
-
 
 # -------datasets (others)-------
 
@@ -120,22 +84,6 @@ Reddit: &Reddit
   n_tri: 3
   epochs: 20 # override >> GNN
 
-Products: &Products
-  dataset: Products
-  data_type: large-scale
-  n_feat: 100
-  n_class: 47
-  n_tri: 1
-  epochs: 20 # override >> GNN
-
-MAG: &MAG
-  dataset: MAG
-  data_type: heterogeneous
-  n_feat: 128
-  n_class: 349
-  n_tri: 3
-  epochs: 100 # override >> GNN
-
 
 # -------model interface-------
 
@@ -143,14 +91,8 @@ GNN: &GNN
   base_gnn: GNN
   global_skip_connection: vanilla # [vanilla, jk, twin]
   skip_connection: vanilla # [vanilla, res, dense, highway]
-  n_layer: 3
-  n_hid: 16
-  dropout: 0.4
-  learning_rate: 0.001
-  weight_decay: 0.0001
   seed: 42
   patience: 100
-  norm: None # [None, LayerNorm, BatchNorm1d]
 
 
 # -------model instance-------
@@ -178,16 +120,6 @@ SAGE: &SAGE
 
 # -------model instance + dataset-------
 
-# Synthesis
-GCN_SynCora: &GCN_SynCora
-  <<: [*SynCora, *GCN]
-  norm: None
-  n_layer: 2
-  n_hid: 16 # [16, 32, 64]
-  dropout: 0.2
-  learning_rate: 0.001
-  weight_decay: 0.001
-
 # Planetoid
 GCN_Cora: &GCN_Cora
   <<: [*Cora, *GCN]
@@ -199,9 +131,15 @@ GCN_Cora: &GCN_Cora
   weight_decay: 0.001
 
 GAT_Cora: &GAT_Cora
-  <<: [*GAT, *GCN_Cora]
+  <<: [*Cora, *GAT]
+  norm: None
+  n_layer: 2
+  n_hid: 16
+  dropout: 0.4
+  learning_rate: 0.01
+  weight_decay: 0.001
 
-GCN_CiteSeer: &GCN_CiteSeer
+GCN_CiteSeer: &GCN_CiteSeers
   <<: [*CiteSeer, *GCN]
   norm: LayerNorm
   n_layer: 2
@@ -211,7 +149,13 @@ GCN_CiteSeer: &GCN_CiteSeer
   weight_decay: 0.0005
 
 GAT_CiteSeer: &GAT_CiteSeer
-  <<: [*GAT, *GCN_CiteSeer]
+  <<: [*CiteSeer, *GAT]
+  norm: LayerNorm
+  n_layer: 2
+  n_hid: 16
+  dropout: 0.4
+  learning_rate: 0.001
+  weight_decay: 0.0005
 
 GCN_PubMed: &GCN_PubMed
   <<: [*PubMed, *GCN]
@@ -223,35 +167,13 @@ GCN_PubMed: &GCN_PubMed
   weight_decay: 0.001
 
 GAT_PubMed: &GAT_PubMed
-  <<: [*GAT, *GCN_PubMed]
-
-# WebKB
-GCN_Cornell: &GCN_Cornell
-  <<: [*Cornell, *GCN]
-  norm: None
+  <<: [*PubMed, *GAT]
+  norm: LayerNorm
   n_layer: 2
-  n_hid: 32
-  dropout: 0.5
-  learning_rate: 0.05
-  weight_decay: 5e-6
-
-GCN_Texas: &GCN_Texas
-  <<: [*Texas, *GCN]
-  norm: None
-  n_layer: 2
-  n_hid: 32
-  dropout: 0.5
-  learning_rate: 0.05
-  weight_decay: 5e-6
-
-GCN_Wisconsin: &GCN_Wisconsin
-  <<: [*Wisconsin, *GCN]
-  norm: None
-  n_layer: 2
-  n_hid: 32
-  dropout: 0.5
-  learning_rate: 0.05
-  weight_decay: 5e-6
+  n_hid: 16
+  dropout: 0.4
+  learning_rate: 0.005
+  weight_decay: 0.001
 
 # Others
 GCN_PPIinduct: &GCN_PPIinduct
@@ -265,7 +187,14 @@ GCN_PPIinduct: &GCN_PPIinduct
   weight_decay: 0
 
 GAT_PPIinduct: &GAT_PPIinduct
-  <<: [*GAT, *GCN_PPIinduct]
+  <<: [*PPIinduct, *GAT]
+  skip_connection: highway
+  norm: BatchNorm1d
+  n_layer: 3
+  n_hid: 256
+  dropout: 0
+  learning_rate: 0.001
+  weight_decay: 0
   n_head: 4
   n_head_last: 6
 
@@ -278,8 +207,14 @@ GCN_Arxiv: &GCN_Arxiv
   learning_rate: 0.001
   weight_decay: 0
 
-GAT_Arxiv: &GAT_Arxiv
-  <<: [*GAT, *GCN_Arxiv]
+SAGE_Arxiv: &SAGE_Arxiv
+  <<: [*Arxiv, *SAGE]
+  norm: BatchNorm1d
+  n_layer: 5
+  n_hid: 256
+  dropout: 0.5
+  learning_rate: 0.001
+  weight_decay: 0
 
 GCN_Reddit: &GCN_Reddit
   <<: [*Reddit, *GCN]
@@ -291,7 +226,13 @@ GCN_Reddit: &GCN_Reddit
   weight_decay: 0.0001
 
 SAGE_Reddit: &SAGE_Reddit
-  <<: [*SAGE, *GCN_Reddit]
+  <<: [*Reddit, *SAGE]
+  norm: BatchNorm1d
+  n_layer: 3
+  n_hid: 256
+  dropout: 0.3
+  learning_rate: 0.001
+  weight_decay: 0.0001
 
 GCN_PPI: &GCN_PPI
   <<: [*PPI, *GCN]
@@ -303,25 +244,13 @@ GCN_PPI: &GCN_PPI
   weight_decay: 0
 
 SAGE_PPI: &SAGE_PPI
-  <<: [*SAGE, *GCN_PPI]
-
-SAGE_Products: &SAGE_Products
-  <<: [*Products, *SAGE]
-  norm: None
-  n_layer: 3
+  <<: [*PPI, *SAGE]
+  norm: BatchNorm1d
+  n_layer: 4
   n_hid: 256
-  dropout: 0.5
-  learning_rate: 0.01
+  dropout: 0.6
+  learning_rate: 0.005
   weight_decay: 0
-
-RGCN_MAG: &RGCN_MAG
-  <<: [*MAG, *GCN]
-  norm: None
-  n_layer: 2
-  n_hid: 64
-  dropout: 0.5
-  learning_rate: 0.01
-  weight_decay: 0.0001 # 0.0001 or 0
 
 
 
@@ -330,21 +259,11 @@ JK: &JK
   global_skip_connection: jk # [vanilla, jk, twin]
   jk_mode: cat # [cat, max, lstm]
 
-
-JKGCN_Cora: &JKGCN_Cora
-  <<: [*JK, *GCN_Cora]
-
 JKGAT_Cora: &JKGAT_Cora
   <<: [*JK, *GAT_Cora]
 
-JKGCN_CiteSeer: &JKGCN_CiteSeer
-  <<: [*JK, *GCN_CiteSeer]
-
 JKGAT_CiteSeer: &JKGAT_CiteSeer
   <<: [*JK, *GAT_CiteSeer]
-
-JKGCN_PubMed: &JKGCN_PubMed
-  <<: [*JK, *GCN_PubMed]
 
 JKGAT_PubMed: &JKGAT_PubMed
   <<: [*JK, *GAT_PubMed]
@@ -352,20 +271,14 @@ JKGAT_PubMed: &JKGAT_PubMed
 JKGAT_PPIinduct: &JKGAT_PPIinduct
   <<: [*JK, *GAT_PPIinduct]
 
-JKGAT_Arxiv: &JKGAT_Arxiv
-  <<: [*JK, *GAT_Arxiv]
+JKSAGE_Arxiv: &JKSAGE_Arxiv
+  <<: [*JK, *SAGE_Arxiv]
 
 JKSAGE_Reddit: &JKSAGE_Reddit
   <<: [*JK, *SAGE_Reddit]
 
 JKSAGE_PPI: &JKSAGE_PPI
   <<: [*JK, *SAGE_PPI]
-
-JKSAGE_Products: &JKSAGE_Products
-  <<: [*JK, *SAGE_Products]
-
-JKRGCN_MAG: &JKRGCN_MAG
-  <<: [*JK, *RGCN_MAG]
 
 
 # -------model instance (our study)-------
@@ -378,52 +291,26 @@ Twin: &Twin
   temparature: 1 # \in R
   self_loop: True # [True, False]
 
-# Synthesis
-TwinGCN_SynCora: &TwinGCN_SynCora
-  <<: [*Twin, *GCN_SynCora]
-  n_layer: 4
-  self_loop: False
-
-# Planetoid
-TwinGCN_Cora: &TwinGCN_Cora
-  <<: [*Twin, *GCN_Cora]
-  n_layer: 9
-
 TwinGAT_Cora: &TwinGAT_Cora
   <<: [*Twin, *GAT_Cora]
-
-TwinGCN_CiteSeer: &TwinGCN_CiteSeer
-  <<: [*Twin, *GCN_CiteSeer]
-  n_layer: 4
-  temparature: 0.1
+  n_layer: 9
 
 TwinGAT_CiteSeer: &TwinGAT_CiteSeer
   <<: [*Twin, *GAT_CiteSeer]
-
-TwinGCN_PubMed: &TwinGCN_PubMed
-  <<: [*Twin, *GCN_PubMed]
+  n_layer: 4
+  temparature: 0.1
 
 TwinGAT_PubMed: &TwinGAT_PubMed
   <<: [*Twin, *GAT_PubMed]
   n_layer: 7
 
-# WebKB
-TwinGCN_Cornell: &TwinGCN_Cornell
-  <<: [*Twin, *GCN_Cornell]
-
-TwinGCN_Texas: &TwinGCN_Texas
-  <<: [*Twin, *GCN_Cornell]
-
-TwinGCN_Wisconsin: &TwinGCN_Wisconsin
-  <<: [*Twin, *GCN_Cornell]
-
-# Others
 TwinGAT_PPIinduct: &TwinGAT_PPIinduct
   <<: [*Twin, *GAT_PPIinduct]
   n_layer: 5
 
-TwinGAT_Arxiv: &TwinGAT_Arxiv
-  <<: [*Twin, *GAT_Arxiv]
+TwinSAGE_Arxiv: &TwinSAGE_Arxiv
+  <<: [*Twin, *SAGE_Arxiv]
+  n_layer: 4
 
 TwinSAGE_Reddit: &TwinSAGE_Reddit
   <<: [*Twin, *SAGE_Reddit]
@@ -433,11 +320,3 @@ TwinSAGE_PPI: &TwinSAGE_PPI
   <<: [*Twin, *SAGE_PPI]
   n_layer: 7
   temparature: 0.5
-
-TwinSAGE_Products: &TwinSAGE_Products
-  <<: [*Twin, *SAGE_Products]
-  # not yet tuning
-
-TwinRGCN_MAG: &TwinRGCN_MAG
-  <<: [*Twin, *RGCN_MAG]
-  # not yet tuning

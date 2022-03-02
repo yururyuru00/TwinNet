@@ -55,20 +55,6 @@ ary=("
 
      python3 train.py -m mlflow.runname=for_paper 'key=TwinGAT_PPIinduct' \
      'TwinGAT_PPIinduct.n_layer=range(2,10)'
-
-
-     python3 train.py -m mlflow.runname=for_paper 'key=GCN_Arxiv' \
-     'GCN_Arxiv.n_layer=range(2,10)'
-
-     python3 train.py -m mlflow.runname=for_paper 'key=GAT_Arxiv' \
-     'GAT_Arxiv.n_layer=range(2,10)'
-
-     python3 train.py -m mlflow.runname=for_paper 'key=JKGAT_Arxiv' \
-     'JKGAT_Arxiv.jk_mode=choice(max,cat,lstm)' \
-     'JKGAT_Arxiv.n_layer=range(2,10)'
-
-     python3 train.py -m mlflow.runname=for_paper 'key=TwinGAT_Arxiv' \
-     'TwinGAT_Arxiv.n_layer=range(2,10)'
      ")
 
 

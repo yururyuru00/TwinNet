@@ -226,3 +226,17 @@ class SkipConnection(nn.Module):
                     gating_weights = torch.sigmoid(self.gate_linear(x))
                     ones = torch.ones_like(gating_weights)
                     return h*gating_weights + x*(ones-gating_weights)
+
+
+def orthonomal_loss(model, device):
+    def eyes_like(tensor):
+        size = tensor.size()[0]
+        return torch.eye(size, out=torch.empty_like(tensor)).to(device)
+
+    orthonomal_loss = torch.tensor(0, dtype=torch.float32).to(device)
+    for conv in model.convs: # in [W^1, W^2, ... , W^L]
+        weight = conv.conv.lin_src.weight
+        mm = torch.mm(weight, torch.transpose(weight, 0, 1))
+        orthonomal_loss += torch.norm(mm - eyes_like(mm))
+
+    return orthonomal_loss
