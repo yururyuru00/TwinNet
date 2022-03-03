@@ -297,7 +297,7 @@ TwinGAT_Cora: &TwinGAT_Cora
 
 TwinGAT_CiteSeer: &TwinGAT_CiteSeer
   <<: [*Twin, *GAT_CiteSeer]
-  n_layer: 4
+  n_layer: 9
   temparature: 0.1
 
 TwinGAT_PubMed: &TwinGAT_PubMed
