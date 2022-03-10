@@ -45,6 +45,7 @@ class GNNConv(nn.Module):
     def __init__(self, conv_name, in_channels, out_channels, norm,
                  self_loop=True, n_heads=[1, 1], iscat=[False, False], dropout_att=0.):
         super(GNNConv, self).__init__()
+        self.name = conv_name
 
         if conv_name == 'gcn_conv':
             self.conv  = GCNConv(in_channels, out_channels, add_self_loops=self_loop)
@@ -227,3 +228,30 @@ class SkipConnection(nn.Module):
                     ones = torch.ones_like(gating_weights)
                     return h*gating_weights + x*(ones-gating_weights)
 
+
+
+
+def orthonomal_loss(model, device):
+    def eyes_like(tensor): # eyes means identity matrix
+        size = tensor.size()[0]
+        return torch.eye(size, out=torch.empty_like(tensor)).to(device)
+
+    def calc_orthonomal_loss(weight):
+        mm = torch.mm(weight, torch.transpose(weight, 0, 1))
+        return torch.norm(mm - eyes_like(mm))
+
+    orthonomal_loss = torch.tensor(0, dtype=torch.float32).to(device)
+    for conv in model.convs[1:]: # in [W^2, W^3, ... , W^L], not include W^1
+        n_heads = 1
+        if conv.name == 'gcn_conv':
+            weights = [conv.conv.lin.weight]
+        elif conv.name == 'gat_conv':
+            n_heads = conv.conv.heads
+            weights = [conv.conv.lin_src.weight]
+        elif conv.name == 'sage_conv':
+            weights = [conv.conv.lin_r.weight, conv.conv.lin_l.weight]
+
+        for weight in weights:
+            orthonomal_loss += (calc_orthonomal_loss(weight) / n_heads / len(weights))
+
+    return orthonomal_loss

@@ -6,9 +6,10 @@ from torch_geometric.datasets import Reddit
 from torch_geometric.loader import NeighborSampler
 
 from models.model_loader import load_net
+from models.layer import orthonomal_loss
 
 
-def train(data, train_loader, model, optimizer, device):
+def train(cfg, data, train_loader, model, optimizer, device):
     model.train()
 
     for batch_id, (batch_size, n_id, adjs) in enumerate(train_loader):
@@ -16,7 +17,8 @@ def train(data, train_loader, model, optimizer, device):
         optimizer.zero_grad()
         h, alpha = model(data.x[n_id], adjs, batch_size)
         prob_labels = F.log_softmax(h, dim=1)
-        loss = F.nll_loss(prob_labels, data.y[n_id[:batch_size]])
+        loss  = F.nll_loss(prob_labels, data.y[n_id[:batch_size]])
+        loss += cfg.coef_orthonomal * orthonomal_loss(model, device)
         loss.backward()
         optimizer.step()
 
@@ -58,7 +60,7 @@ def train_and_test(tri, cfg, data, device):
                                  weight_decay = cfg['weight_decay'])
     
     for epoch in tqdm(range(1, cfg['epochs']+1)):
-        train(data, train_loader, model, optimizer, device)
+        train(cfg, data, train_loader, model, optimizer, device)
 
     return test(data, test_loader, model, device)
 

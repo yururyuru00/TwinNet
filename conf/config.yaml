@@ -1,4 +1,4 @@
-key: GCN_SynCora
+key: TwinSAGE_PPI
 
 
 # -------hydra & mlflow & optuna-------
@@ -290,10 +290,11 @@ Twin: &Twin
   kernel: wdp # [dp, sdp, wdp, ad, mx]
   temparature: 1 # \in R
   self_loop: True # [True, False]
+  coef_orthonomal: 100 # in R+
 
 TwinGAT_Cora: &TwinGAT_Cora
   <<: [*Twin, *GAT_Cora]
-  n_layer: 9
+  n_layer: 7
 
 TwinGAT_CiteSeer: &TwinGAT_CiteSeer
   <<: [*Twin, *GAT_CiteSeer]
@@ -302,11 +303,11 @@ TwinGAT_CiteSeer: &TwinGAT_CiteSeer
 
 TwinGAT_PubMed: &TwinGAT_PubMed
   <<: [*Twin, *GAT_PubMed]
-  n_layer: 7
+  n_layer: 9
 
 TwinGAT_PPIinduct: &TwinGAT_PPIinduct
   <<: [*Twin, *GAT_PPIinduct]
-  n_layer: 5
+  n_layer: 9
 
 TwinSAGE_Arxiv: &TwinSAGE_Arxiv
   <<: [*Twin, *SAGE_Arxiv]

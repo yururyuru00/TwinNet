@@ -6,9 +6,10 @@ from torch_geometric.loader import RandomNodeSampler
 from ogb.nodeproppred import PygNodePropPredDataset, Evaluator
 
 from models.model_loader import load_net
+from models.layer import orthonomal_loss
 from utils import fix_seed
 
-def train(loader, model, optimizer, device):
+def train(cfg, loader, model, optimizer, device):
     model.train()
     criteria = torch.nn.BCEWithLogitsLoss()
 
@@ -16,7 +17,8 @@ def train(loader, model, optimizer, device):
         data = data.to(device)
         optimizer.zero_grad()
         out, alpha = model(data.x, data.edge_index)
-        loss = criteria(out[data.train_mask], data.y[data.train_mask])
+        loss  = criteria(out[data.train_mask], data.y[data.train_mask])
+        loss += cfg.coef_orthonomal * orthonomal_loss(model, device)
         loss.backward()
         optimizer.step()
 
@@ -63,7 +65,7 @@ def train_and_test(tri, cfg, data, device):
     evaluator = Evaluator('ogbn-proteins')
 
     for epoch in tqdm(range(1, cfg['epochs']+1)):
-        train(train_loader, model, optimizer, device)
+        train(cfg, train_loader, model, optimizer, device)
 
     return test(test_loader, model, evaluator, device)
 

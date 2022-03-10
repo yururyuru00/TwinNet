@@ -6,9 +6,10 @@ from torch_geometric.datasets import PPI
 from torch_geometric.loader import DataLoader
 
 from models.model_loader import load_net
+from models.layer import orthonomal_loss
 
 
-def train(loader, model, optimizer, device):
+def train(cfg, loader, model, optimizer, device):
     model.train()
     criteria = torch.nn.BCEWithLogitsLoss()
 
@@ -16,7 +17,8 @@ def train(loader, model, optimizer, device):
         data = data.to(device)
         optimizer.zero_grad()
         out, alpha = model(data.x, data.edge_index)
-        loss = criteria(out, data.y)
+        loss  = criteria(out, data.y)
+        loss += cfg.coef_orthonomal * orthonomal_loss(model, device)
         loss.backward()
         optimizer.step()
 
@@ -51,7 +53,7 @@ def train_and_test(cfg, data_loader, device):
                                  weight_decay = cfg['weight_decay'])
 
     for epoch in tqdm(range(1, cfg['epochs']+1)):
-        train(train_loader, model, optimizer, device)
+        train(cfg, train_loader, model, optimizer, device)
 
     loader = {'valid': valid_loader, 'test': test_loader}
     return test(loader, model, device)

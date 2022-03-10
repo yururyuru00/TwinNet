@@ -6,6 +6,7 @@ import torch_geometric.transforms as T
 from ogb.nodeproppred import PygNodePropPredDataset, Evaluator
 
 from models.model_loader import load_net
+from models.layer import orthonomal_loss
 
 
 def acc(y_true, y_pred):
@@ -15,14 +16,15 @@ def acc(y_true, y_pred):
     return correct.to(torch.int8)
 
 
-def train(data, model, optimizer):
+def train(cfg, data, model, optimizer, device):
     model.train()
 
     optimizer.zero_grad()
     out, alpha = model(data.x, data.adj_t)
     out = out.log_softmax(dim=-1)
     out = out[data['train_mask']]
-    loss = F.nll_loss(out, data.y.squeeze(1)[data['train_mask']])
+    loss  = F.nll_loss(out, data.y.squeeze(1)[data['train_mask']])
+    loss += cfg.coef_orthonomal * orthonomal_loss(model, device)
     loss.backward()
     optimizer.step()
 
@@ -49,7 +51,7 @@ def train_and_test(cfg, data, device):
     evaluator = Evaluator('ogbn-arxiv')
 
     for epoch in tqdm(range(1, cfg['epochs']+1)):
-        train(data, model, optimizer)
+        train(cfg, data, model, optimizer, device)
 
     return test(data, model, evaluator)
 

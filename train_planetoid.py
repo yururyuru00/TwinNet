@@ -9,15 +9,17 @@ from torch_geometric.datasets import Planetoid
 
 from models.model_loader import load_net
 from utils import fix_seed, accuracy
+from models.layer import orthonomal_loss
 
 
-def train(data, model, optimizer):
+def train(cfg, data, model, optimizer, device):
     model.train()
     optimizer.zero_grad()
 
     h, _ = model(data.x, data.edge_index)
     prob_labels = F.log_softmax(h, dim=1)
     loss_train  = F.nll_loss(prob_labels[data.train_mask], data.y[data.train_mask])
+    loss_train += cfg.coef_orthonomal * orthonomal_loss(model, device)
     loss_train.backward()
     optimizer.step()
 
@@ -50,7 +52,7 @@ def train_and_test(cfg, data, device):
     best_loss = 100.
     bad_counter = 0
     for epoch in range(1, cfg.epochs+1):
-        loss_val, acc_val = train(data, model, optimizer)
+        loss_val, acc_val = train(cfg, data, model, optimizer, device)
 
         if loss_val < best_loss:
             best_loss = loss_val
