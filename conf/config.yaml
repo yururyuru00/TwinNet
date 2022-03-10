@@ -290,7 +290,7 @@ Twin: &Twin
   kernel: wdp # [dp, sdp, wdp, ad, mx]
   temparature: 1 # \in R
   self_loop: True # [True, False]
-  coef_orthonomal: 100 # in R+
+  coef_orthonomal: 0 # in R+
 
 TwinGAT_Cora: &TwinGAT_Cora
   <<: [*Twin, *GAT_Cora]
@@ -321,3 +321,22 @@ TwinSAGE_PPI: &TwinSAGE_PPI
   <<: [*Twin, *SAGE_PPI]
   n_layer: 7
   temparature: 0.5
+
+
+# for debug experiment sort alpha
+TwinGAT_Cora_sort_alpha: &TwinGAT_Cora_sort_alpha
+  <<: [*TwinGAT_Cora]
+  debug_mode: True
+
+TwinGAT_CiteSeer_sort_alpha: &TwinGAT_CiteSeer_sort_alpha
+  <<: [*TwinGAT_CiteSeer]
+  debug_mode: True
+
+TwinGAT_PubMed_sort_alpha: &TwinGAT_PubMed_sort_alpha
+  <<: [*TwinGAT_PubMed]
+  debug_mode: True
+
+# for experiment visualize alpha
+TwinGAT_PubMed_visualize_alpha: &TwinGAT_PubMed_visualize_alpha
+  <<: [*TwinGAT_PubMed]
+  debug_mode: True
