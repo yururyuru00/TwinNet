@@ -67,23 +67,24 @@ def visualize_alpha(data, center_node, alpha, max_depth,
     nx.draw_networkx_nodes(G, pos,
                               nodelist   = target_nodes,
                               edgecolors = 'black',
-                              node_size  = 100,
+                              node_size  = 300,
                               node_color = [ '#%02x%02x%02x' % rgb
                                 for rgb in target_node_colors ])
     nx.draw_networkx_nodes(G, pos,
                               nodelist   = [center_node],
                               edgecolors = 'black',
-                              node_size  = 500,
+                              node_size  = 1500,
                               node_shape = '*',
                               node_color = '#%02x%02x%02x' % center_node_color)
-    nx.draw_networkx_edges(G, pos, width=0.05, alpha=0.3, arrows=False)
+    nx.draw_networkx_edges(G, pos, width=0.0, alpha=0.3, arrows=False)
     plt.savefig(save_file)
 
 
 
 if __name__ == "__main__":
-    dataset_name = 'Cora'
-    num_layer = 5
+    dataset_name = 'PubMed'
+    num_layer = 3
+    temparature = 1
 
     # load data and pre_transform
     if dataset_name == 'KarateClub':
@@ -92,7 +93,7 @@ if __name__ == "__main__":
     else:
         dataset = Planetoid(root      = '../data/'+dataset_name,
                             name      = dataset_name,
-                            transform = T.AddSelfLoops()) # maybe need not
+                            transform = T.AddSelfLoops())
     data = dataset[0]
 
     # calculate accuracy of each node by gnn and twin-gnn
@@ -106,18 +107,20 @@ if __name__ == "__main__":
     target_idxes = np.argsort(-1*diff_correct)
 
     test_mask = np.load('./correct_idxes/{}/test_mask.npy'.format(dataset_name))
-    alphas = np.load('./alpha/{}_alpha_L{}.npy'.format(dataset_name, num_layer))
-    num_layer = alphas.shape[-1]
+    alpha = np.load('./alpha/{}_alpha_L{}_t{}.npy'.format(dataset_name, num_layer, temparature))
+    num_layer = alpha.shape[-1]
 
     target_idxes_of_test = [t.item() for t in target_idxes if test_mask[t]]
+    file = open('./visualize_alpha/{}/L3/memo.txt'.format(dataset_name), 'w')
     for rank, v in enumerate(target_idxes_of_test):
         if diff_correct[v] < 0.5:
             break
 
-        print('rank{}(+{:.0f}%) node\'s alpha: {}'.format(rank+1, diff_correct[v]*100, alphas[v]))
-        visualize_alpha(data, v, alphas[v], num_layer,
+        file.write('rank{}(+{:.0f}%) node\'s alpha: {}\n'.format(rank+1, diff_correct[v]*100, alpha[v]))
+        visualize_alpha(data, v, alpha[v], num_layer,
                         seed=42, partial_visualize=True,
-                        save_file = './visualize_alpha/{}/rank{}node_twingnn.png'.format(dataset_name, rank+1))
+                        save_file = './visualize_alpha/{}/L3/rank{}node_twingnn.png'.format(dataset_name, rank+1))
         visualize_alpha(data, v, np.array([0.,0.,0.,0.,1.]), num_layer,
                         seed=42, partial_visualize=True,
-                        save_file = './visualize_alpha/{}/rank{}node_gnn.png'.format(dataset_name, rank+1))
+                        save_file = './visualize_alpha/{}/L3/rank{}node_gnn.png'.format(dataset_name, rank+1))
+    file.close()

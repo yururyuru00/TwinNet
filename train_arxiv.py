@@ -24,7 +24,8 @@ def train(cfg, data, model, optimizer, device):
     out = out.log_softmax(dim=-1)
     out = out[data['train_mask']]
     loss  = F.nll_loss(out, data.y.squeeze(1)[data['train_mask']])
-    loss += cfg.coef_orthonomal * orthonomal_loss(model, device)
+    if cfg.global_skip_connection == 'twin': # if it is proposal model
+        loss += cfg.coef_orthonomal * orthonomal_loss(model, device)
     loss.backward()
     optimizer.step()
 

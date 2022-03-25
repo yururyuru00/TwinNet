@@ -261,24 +261,30 @@ JK: &JK
 
 JKGAT_Cora: &JKGAT_Cora
   <<: [*JK, *GAT_Cora]
+  n_layer: 6
 
 JKGAT_CiteSeer: &JKGAT_CiteSeer
   <<: [*JK, *GAT_CiteSeer]
+  n_layer: 8
 
 JKGAT_PubMed: &JKGAT_PubMed
   <<: [*JK, *GAT_PubMed]
+  jk_mode: max
+  n_layer: 3
 
 JKGAT_PPIinduct: &JKGAT_PPIinduct
   <<: [*JK, *GAT_PPIinduct]
+  n_layer: 9
 
 JKSAGE_Arxiv: &JKSAGE_Arxiv
   <<: [*JK, *SAGE_Arxiv]
-
-JKSAGE_Reddit: &JKSAGE_Reddit
-  <<: [*JK, *SAGE_Reddit]
+  jk_mode: max
+  n_layer: 5
 
 JKSAGE_PPI: &JKSAGE_PPI
   <<: [*JK, *SAGE_PPI]
+  n_layer: 6
+
 
 
 # -------model instance (our study)-------
@@ -313,30 +319,51 @@ TwinSAGE_Arxiv: &TwinSAGE_Arxiv
   <<: [*Twin, *SAGE_Arxiv]
   n_layer: 4
 
-TwinSAGE_Reddit: &TwinSAGE_Reddit
-  <<: [*Twin, *SAGE_Reddit]
-  n_layer: 3
-
 TwinSAGE_PPI: &TwinSAGE_PPI
   <<: [*Twin, *SAGE_PPI]
   n_layer: 7
   temparature: 0.5
 
 
-# for debug experiment sort alpha
-TwinGAT_Cora_sort_alpha: &TwinGAT_Cora_sort_alpha
+
+# for debug experiment kldiv alpha
+TwinGAT_Cora_kldiv_alpha: &TwinGAT_Cora_kldiv_alpha
   <<: [*TwinGAT_Cora]
   debug_mode: True
 
-TwinGAT_CiteSeer_sort_alpha: &TwinGAT_CiteSeer_sort_alpha
+JKGAT_Cora_kldiv_alpha: &JKGAT_Cora_kldiv_alpha
+  <<: [*JKGAT_Cora]
+  debug_mode: True
+  n_layer: 7
+  jk_mode: lstm
+
+TwinGAT_CiteSeer_kldiv_alpha: &TwinGAT_CiteSeer_kldiv_alpha
   <<: [*TwinGAT_CiteSeer]
   debug_mode: True
 
-TwinGAT_PubMed_sort_alpha: &TwinGAT_PubMed_sort_alpha
+JKGAT_CiteSeer_kldiv_alpha: &JKGAT_CiteSeer_kldiv_alpha
+  <<: [*JKGAT_CiteSeer]
+  debug_mode: True
+  n_layer: 9
+  jk_mode: lstm
+
+TwinGAT_PubMed_kldiv_alpha: &TwinGAT_PubMed_kldiv_alpha
   <<: [*TwinGAT_PubMed]
   debug_mode: True
 
+JKGAT_PubMed_kldiv_alpha: &JKGAT_PubMed_kldiv_alpha
+  <<: [*JKGAT_PubMed]
+  debug_mode: True
+  n_layer: 9
+  jk_mode: lstm
+
 # for experiment visualize alpha
+GAT_PubMed_visualize_alpha: &GAT_PubMed_visualize_alpha
+  <<: [*GAT_PubMed]
+  debug_mode: True
+  n_layer: 3
+
 TwinGAT_PubMed_visualize_alpha: &TwinGAT_PubMed_visualize_alpha
   <<: [*TwinGAT_PubMed]
   debug_mode: True
+  n_layer: 3

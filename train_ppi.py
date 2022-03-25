@@ -18,7 +18,8 @@ def train(cfg, loader, model, optimizer, device):
         optimizer.zero_grad()
         out, alpha = model(data.x, data.edge_index)
         loss  = criteria(out[data.train_mask], data.y[data.train_mask])
-        loss += cfg.coef_orthonomal * orthonomal_loss(model, device)
+        if cfg.global_skip_connection == 'twin': # if it is proposal model
+            loss += cfg.coef_orthonomal * orthonomal_loss(model, device)
         loss.backward()
         optimizer.step()
 

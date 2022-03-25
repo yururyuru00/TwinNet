@@ -37,4 +37,4 @@ elif args.name == 'Arxiv':
 
 
 h = homophily(data.edge_index, data.y, method=args.method)
-print('edge homophily: {:.4f}'.format(h))
+print('{}\'s {} homophily: {:.4f}'.format(args.name, args.method, h))

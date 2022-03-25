@@ -19,7 +19,8 @@ def train(cfg, data, model, optimizer, device):
     h, _ = model(data.x, data.edge_index)
     prob_labels = F.log_softmax(h, dim=1)
     loss_train  = F.nll_loss(prob_labels[data.train_mask], data.y[data.train_mask])
-    loss_train += cfg.coef_orthonomal * orthonomal_loss(model, device)
+    if cfg.global_skip_connection == 'twin': # if it is proposal model
+        loss_train += cfg.coef_orthonomal * orthonomal_loss(model, device)
     loss_train.backward()
     optimizer.step()
 

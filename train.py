@@ -8,7 +8,6 @@ from train_planetoid  import run as train_planetoid
 from train_arxiv      import run as train_arxiv
 from train_ppi        import run as train_ppi
 from train_ppi_induct import run as train_ppi_induct
-from train_reddit     import run as train_reddit
 from utils import fix_seed, log_params_from_omegaconf_dict, log_artifacts
 
 
@@ -32,8 +31,6 @@ def main(cfg: DictConfig):
             valid_acces, test_acces, artifacts = train_ppi(cfg, root, device)
         elif cfg.dataset == 'PPIinduct':
             valid_acces, test_acces, artifacts = train_ppi_induct(cfg, root, device)
-        elif cfg.dataset == 'Reddit':
-            valid_acces, test_acces, artifacts = train_reddit(cfg, root, device)
 
         for i, acc_test in enumerate(test_acces):
             mlflow.log_metric('acc_test', value=acc_test, step=i)
