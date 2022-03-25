@@ -82,7 +82,7 @@ def visualize_alpha(data, center_node, alpha, max_depth,
 
 
 if __name__ == "__main__":
-    dataset_name = 'PubMed'
+    dataset_name = 'PubMed' # only PubMed
     num_layer = 3
     temparature = 1
 

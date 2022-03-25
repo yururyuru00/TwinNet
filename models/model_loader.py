@@ -1,11 +1,11 @@
-from .for_small_scale.model_ours import TwinGCN, TwinGAT, TwinSAGE
-from .for_small_scale.model_jknet import JKGCN, JKGAT, JKSAGE
-from .for_small_scale.model_gnn import GCN, GAT, SAGE
+from .twingnn import TwinGCN, TwinGAT, TwinSAGE
+from .jknet import JKGCN, JKGAT, JKSAGE
+from .gnn import GCN, GAT, SAGE
     
 
 def load_net(cfg, **kwargs):
 
-    # our algorithm (attention skip-connection)
+    # our algorithm (TwinGNN)
     if cfg.global_skip_connection == 'twin':
         if cfg.base_gnn == 'GCN':
             return TwinGCN(cfg)
@@ -14,7 +14,7 @@ def load_net(cfg, **kwargs):
         elif cfg.base_gnn == 'GAT':
             return TwinGAT(cfg)
     
-    # existing algorithms (jk-net)
+    # existing algorithms (JKNet)
     elif cfg.global_skip_connection == 'jk':
         if cfg.base_gnn == 'GCN':
             return JKGCN(cfg)
@@ -23,7 +23,7 @@ def load_net(cfg, **kwargs):
         elif cfg.base_gnn == 'GAT':
             return JKGAT(cfg)
     
-    # existing algorithms (gnn)
+    # existing algorithms (GNN)
     else:
         if cfg.base_gnn == 'GCN':
             return GCN(cfg)

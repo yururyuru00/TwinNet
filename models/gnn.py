@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from ..layer import GNNConv, SkipConnection
+from .layer import GNNConv, SkipConnection
 
 
 class GCN(nn.Module):

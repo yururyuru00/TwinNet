@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
 
-from ..layer import GNNConv, Summarize, SkipConnection
+from .layer import GNNConv, Summarize, SkipConnection
 
 
 class TwinGCN(nn.Module):

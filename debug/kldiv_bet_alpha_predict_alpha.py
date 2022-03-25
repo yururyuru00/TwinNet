@@ -32,7 +32,7 @@ def calc_khop_homophily(data, center_node, k_hop):
     return num_same_labels / num_neighbors
 
 
-dataset_name = 'PubMed'
+dataset_name = 'PubMed' # Cora or CiteSeer or PubMed
 num_layer = 9
 temparature= 1
 
@@ -62,13 +62,7 @@ print(alpha_true)
 # load alpha_predicted
 alphas = {}
 alphas['TwinGNN'] = np.load('./alpha/{}_alpha_L{}_t{}.npy'.format(dataset_name, num_layer, temparature))
-# try:
-#     alphas['jk'] = np.load('./alpha/{}_JK_alpha_L{}.npy'.format(dataset_name, num_layer))
-# except FileNotFoundError: # it means jknet failed because of out of memory
-#     pass
 n_nodes = alphas['TwinGNN'].shape[0]
-binomial = make_binomial(num_layer)
-# alphas['skip'] = np.repeat(binomial.reshape(1, -1), n_nodes, axis=0)
 alphas['GCN']  = np.repeat(np.identity(num_layer)[-1].reshape(1, -1), n_nodes, axis=0)
 
 

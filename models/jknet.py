@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
 
-from ..layer import GNNConv, SkipConnection, JumpingKnowledge
+from .layer import GNNConv, SkipConnection, JumpingKnowledge
 
 
 class JKGCN(nn.Module):
